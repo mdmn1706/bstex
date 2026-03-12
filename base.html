@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>{% block title %}BS Textile{% endblock %}</title>
+
+  <!-- ═══ PWA ═══ -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#1E4A54">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- iOS Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BS Textile">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+
+  <!-- Splash screen colour for iOS -->
+  <meta name="msapplication-TileColor" content="#1E4A54">
+  <meta name="msapplication-TileImage" content="/static/icon-192.png">
+  <!-- ═════════════ -->
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg: #F8F5F0;
+      --deep: #1E4A54;
+      --accent: #2AA7A1;
+      --accent-light: #52D6C9;
+      --warm: #D4A574;
+      --warm-light: #F0D8B8;
+      --text: #2C3E50;
+      --text-light: #697777;
+
+      --glass: rgba(255, 255, 255, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.3);
+      --shadow-soft: 0 25px 60px rgba(30, 74, 84, 0.08);
+      --shadow-deep: 0 35px 80px rgba(30, 74, 84, 0.12);
+
+      --gradient-primary: linear-gradient(135deg, var(--accent) 0%, var(--deep) 100%);
+      --gradient-warm: linear-gradient(135deg, var(--warm) 0%, #E8C39E 100%);
+      --gradient-bg: linear-gradient(135deg, #F8F5F0 0%, #F0EBE3 100%);
+
+      --r-xl: 28px;
+      --r-lg: 22px;
+      --r-md: 16px;
+      --r-sm: 12px;
+
+      --t: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--gradient-bg);
+      color: var(--text);
+      position: relative;
+    }
+
+    /* === BACKGROUND & DECORATIVE ELEMENTS === */
+    .fabric-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(42, 167, 161, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(212, 165, 116, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(30, 74, 84, 0.05) 0%, transparent 50%);
+    }
+
+    .threads {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      opacity: 0.4;
+    }
+
+    .thread {
+      position: absolute;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent, var(--accent-light), var(--warm), transparent);
+      animation: thread-float 15s linear infinite;
+      filter: blur(0.5px);
+    }
+
+    @keyframes thread-float {
+      0% { transform: translateY(-100%) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(100%) rotate(360deg); opacity: 0; }
+    }
+
+    .fabric-pattern {
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(42, 167, 161, 0.03) 2px, rgba(42, 167, 161, 0.03) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(212, 165, 116, 0.03) 2px, rgba(212, 165, 116, 0.03) 4px);
+      background-size: 40px 40px;
+      z-index: 1;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .needles {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .needle {
+      position: absolute;
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--deep), transparent);
+      border-radius: 2px;
+      animation: needle-float 20s linear infinite;
+      opacity: 0.3;
+    }
+
+    .needle::before {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    @keyframes needle-float {
+      0% { transform: translateX(-100px) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateX(calc(100vw + 100px)) rotate(360deg); opacity: 0; }
+    }
+
+    /* === LAYOUT === */
+    .app {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    /* === BRAND SECTION === */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 16px 20px;
+      border-radius: var(--r-xl);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+      transition: var(--t);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-deep);
+    }
+
+    .logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: #1E4A54;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 15px 35px rgba(42, 167, 161, 0.25), 0 5px 15px rgba(30, 74, 84, 0.15);
+      flex-shrink: 0;
+    }
+
+    .logo i {
+      color: white;
+      font-size: 24px;
+    }
+
+    .brand-text h1 {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+      line-height: 1.2;
+      background: linear-gradient(135deg, var(--deep), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-text p {
+      margin-top: 4px;
+      font-size: 14px;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    /* === NAVIGATION === */
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: var(--r-lg);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--deep);
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+      transition: var(--t);
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-deep);
+    }
+
+    .nav-btn.active {
+      background: var(--gradient-primary);
+      color: white;
+      border-color: transparent;
+    }
+
+    /* === STATUS INDICATOR (Optional) === */
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      border-radius: var(--r-lg);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2AA7A1, #1E4A54);
+      box-shadow: 0 0 15px rgba(42, 167, 161, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+
+    .status-text {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-time {
+      font-size: 13px;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    /* === MAIN CONTENT === */
+    .main {
+      flex: 1;
+      padding: 0 32px 32px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* === FOOTER === */
+    .footer {
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-light);
+      font-size: 14px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .footer-info {
+      padding: 14px 20px;
+      border-radius: var(--r-lg);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+    }
+
+    /* === UTILITY COMPONENTS === */
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+    }
+
+    .glass-card:hover {
+      box-shadow: var(--shadow-deep);
+      border-color: rgba(42, 167, 161, 0.3);
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      border-radius: var(--r-lg);
+      background: var(--gradient-primary);
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 15px 35px rgba(42, 167, 161, 0.25), 0 5px 15px rgba(30, 74, 84, 0.15);
+      transition: var(--t);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 45px rgba(42, 167, 161, 0.35);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-radius: var(--r-lg);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--deep);
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+      transition: var(--t);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: var(--accent);
+    }
+
+    /* === RESPONSIVE === */
+    /* ═══════════════════════════════════════
+       MOBILE — телефон оптимизацияси
+    ═══════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        gap: 8px;
+        flex-wrap: nowrap;
+      }
+      .brand {
+        gap: 10px;
+        padding: 8px 12px;
+        flex-shrink: 1;
+        min-width: 0;
+      }
+      .logo {
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 11px !important;
+        flex-shrink: 0;
+      }
+      .logo span { font-size: 19px !important; }
+      .logo i { font-size: 17px !important; }
+      .brand-text h1 {
+        font-size: 14px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .brand-text p {
+        font-size: 10px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 1px;
+      }
+      .nav {
+        gap: 5px;
+        flex-shrink: 0;
+        flex-wrap: nowrap;
+      }
+      .nav-btn {
+        padding: 7px 11px;
+        font-size: 12px;
+        gap: 5px;
+        border-radius: 10px;
+        white-space: nowrap;
+      }
+      .status-indicator {
+        padding: 7px 9px;
+        gap: 5px;
+        flex-shrink: 0;
+      }
+      .status-text  { font-size: 10px !important; }
+      .status-time  { font-size: 10px !important; }
+      .main { padding: 0 12px 16px; }
+      .footer {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px;
+        gap: 8px;
+      }
+      .footer-info {
+        text-align: center;
+        font-size: 12px;
+        padding: 9px 12px;
+      }
+    }
+    @media (max-width: 400px) {
+      .header { padding: 7px 9px; }
+      .brand  { padding: 6px 9px; gap: 7px; }
+      .logo   { width: 32px !important; height: 32px !important; border-radius: 9px !important; }
+      .logo span { font-size: 16px !important; }
+      .brand-text h1 { font-size: 12px !important; }
+      .brand-text p  { display: none; }
+      .nav-btn { padding: 6px 9px; font-size: 11px; }
+    }
+
+    /* PWA standalone — скрыть статус-индикатор */
+    @media all and (display-mode: standalone) {
+      .status-indicator { display: none !important; }
+      .header {
+        padding-top: max(12px, env(safe-area-inset-top)) !important;
+        padding-left: max(12px, env(safe-area-inset-left)) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
+      }
+      .footer {
+        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+      }
+    }
+  </style>
+  <style>
+    @media (max-width: 900px) {
+      .table-container { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+      table { min-width: max-content; }
+      .wh-wrap { grid-template-columns: 1fr !important; }
+      .income-form-grid { grid-template-columns: 1fr 1fr !important; }
+    }
+    @media (max-width: 600px) {
+      .income-form-grid { grid-template-columns: 1fr !important; }
+      .stats-strip { grid-template-columns: 1fr 1fr !important; }
+      .order-grid { grid-template-columns: 1fr !important; }
+      .form-grid { grid-template-columns: 1fr !important; }
+      .cash-stats { grid-template-columns: 1fr !important; }
+    }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+  <div class="fabric-bg"></div>
+  <div class="fabric-pattern"></div>
+  <div class="threads" id="threads"></div>
+  <div class="needles" id="needles"></div>
+
+  <div class="app">
+    <header class="header">
+      <a href="/menu" class="brand">
+        <div class="logo" style="background:#1E4A54;border-radius:16px;"><span style="color:#E8E0D5;font-size:30px;font-weight:900;font-style:normal;font-family:Georgia,'Times New Roman',serif;letter-spacing:-1px;line-height:1;">bs</span></div>
+        <div class="brand-text">
+          <h1>{% block brand_title %}BS Textile{% endblock %}</h1>
+          <p>{% block brand_subtitle %}Ишлаб чиқаришни бошқариш панели{% endblock %}</p>
+        </div>
+      </a>
+
+      <div class="nav">
+        <a href="/menu" class="nav-btn">
+          <i class="fas fa-home"></i>
+          Бош саҳифа
+        </a>
+        {% block nav_items %}{% endblock %}
+      </div>
+    </header>
+
+    <main class="main">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+      <div class="footer-info">© BS Textile — Ишлаб чиқаришни бошқариш панели</div>
+      <a href="/logout" class="btn-primary">
+        <i class="fas fa-right-from-bracket"></i>
+        Тизимдан чиқиш
+      </a>
+    </footer>
+  </div>
+
+  <script>
+    // Скрыть статус если запущено как PWA
+    if (window.navigator.standalone === true || window.matchMedia('(display-mode:standalone)').matches) {
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.status-indicator').forEach(function(el) { el.style.display = 'none'; });
+      });
+    }
+
+    (function createThreads() {
+      const threadsContainer = document.getElementById('threads');
+      for (let i = 0; i < 15; i++) {
+        const thread = document.createElement('div');
+        thread.className = 'thread';
+        thread.style.left = `${Math.random() * 100}%`;
+        thread.style.animationDelay = `${Math.random() * 15}s`;
+        thread.style.animationDuration = `${10 + Math.random() * 10}s`;
+        threadsContainer.appendChild(thread);
+      }
+    })();
+
+    (function createNeedles() {
+      const needlesContainer = document.getElementById('needles');
+      for (let i = 0; i < 8; i++) {
+        const needle = document.createElement('div');
+        needle.className = 'needle';
+        needle.style.top = `${Math.random() * 100}%`;
+        needle.style.animationDelay = `${Math.random() * 20}s`;
+        needle.style.animationDuration = `${15 + Math.random() * 15}s`;
+        needlesContainer.appendChild(needle);
+      }
+    })();
+
+    (function updateClock() {
+      const timeElement = document.getElementById('currentTime');
+      if (!timeElement) return;
+
+      function formatTime(date) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        return date.toLocaleDateString('uz-UZ', options);
+      }
+
+      function update() {
+        timeElement.textContent = formatTime(new Date());
+      }
+
+      update();
+      setInterval(update, 1000);
+    })();
+  </script>
+
+  <!-- ═══════════════════════════════════════════
+       РАҚАМЛИ КЛАВИАТУРА  (NUMPAD)
+       Автоматик равишда барча type="number" ва
+       inputmode="numeric" майдонлари учун ишлайди
+  ══════════════════════════════════════════════ -->
+  <style>
+    /* ── OVERLAY ── */
+    #np-overlay {
+      position: fixed; inset: 0; z-index: 9998;
+      background: rgba(10, 35, 45, 0.35);
+      backdrop-filter: blur(3px);
+      opacity: 0; pointer-events: none;
+      transition: opacity .22s ease;
+    }
+    #np-overlay.np-show { opacity: 1; pointer-events: all; }
+
+    /* ── PANEL ── */
+    #np-panel {
+      position: fixed; z-index: 9999;
+      bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+      width: 100%; max-width: 360px;
+      background: linear-gradient(160deg, rgba(255,255,255,.97) 0%, rgba(244,241,236,.98) 100%);
+      border-radius: 24px 24px 0 0;
+      box-shadow: 0 -8px 40px rgba(20,60,70,.18), 0 -2px 10px rgba(20,60,70,.08);
+      padding: 0 0 env(safe-area-inset-bottom);
+      transition: transform .3s cubic-bezier(.34,1.25,.64,1);
+      user-select: none;
+      border-top: 1px solid rgba(42,167,161,.15);
+    }
+    #np-panel.np-show { transform: translateX(-50%) translateY(0); }
+
+    /* ── DRAG HANDLE ── */
+    .np-handle {
+      width: 40px; height: 4px; border-radius: 2px;
+      background: rgba(30,74,84,.18);
+      margin: 10px auto 0;
+    }
+
+    /* ── DISPLAY ── */
+    .np-display {
+      margin: 10px 16px 6px;
+      padding: 10px 16px;
+      background: rgba(30,74,84,.05);
+      border-radius: 12px;
+      border: 1px solid rgba(30,74,84,.10);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .np-display-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .7px; color: #5e7480; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; max-width: 160px;
+    }
+    .np-display-val {
+      font-family: 'Roboto Mono', 'Courier New', monospace;
+      font-size: 22px; font-weight: 700; color: #0B2530;
+      letter-spacing: .5px; text-align: right; flex:1;
+      min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    }
+    .np-display-val:empty::after { content: '0'; color: rgba(11,37,48,.25); }
+
+    /* ── GRID ── */
+    .np-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 6px 14px 14px;
+    }
+
+    /* ── KEY ── */
+    .np-key {
+      height: 58px; border-radius: 14px; border: none;
+      font-size: 22px; font-weight: 700;
+      cursor: pointer; outline: none;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .1s, box-shadow .1s, background .1s;
+      position: relative; overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .np-key::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: rgba(255,255,255,.5); opacity: 0; transition: opacity .15s;
+    }
+    .np-key:active::after { opacity: 1; }
+    .np-key:active { transform: scale(.94); }
+
+    /* digit keys */
+    .np-key.digit {
+      background: #ffffff;
+      color: #0B2530;
+      box-shadow: 0 2px 6px rgba(20,60,70,.10), 0 1px 2px rgba(20,60,70,.06);
+      border: 1px solid rgba(20,60,70,.09);
+      font-family: 'Roboto Mono', 'Courier New', monospace;
+    }
+    .np-key.digit:hover { background: rgba(42,167,161,.06); border-color: rgba(42,167,161,.25); }
+
+    /* dot key */
+    .np-key.dot {
+      background: #f0ece6;
+      color: #1E4A54;
+      box-shadow: 0 2px 6px rgba(20,60,70,.08);
+      border: 1px solid rgba(20,60,70,.08);
+      font-size: 28px; font-weight: 900;
+    }
+
+    /* backspace key */
+    .np-key.back {
+      background: linear-gradient(135deg, rgba(212,165,116,.25), rgba(212,165,116,.15));
+      color: #a06030;
+      box-shadow: 0 2px 6px rgba(160,96,48,.12);
+      border: 1px solid rgba(212,165,116,.3);
+      font-size: 20px;
+    }
+    .np-key.back:hover { background: linear-gradient(135deg, rgba(212,165,116,.4), rgba(212,165,116,.25)); }
+
+    /* confirm key — spans full width */
+    .np-key.confirm {
+      grid-column: 1 / -1;
+      height: 52px;
+      background: linear-gradient(135deg, #2AA7A1, #1E4A54);
+      color: white;
+      font-size: 15px; font-weight: 800;
+      letter-spacing: .5px;
+      box-shadow: 0 8px 24px rgba(42,167,161,.3), 0 2px 6px rgba(30,74,84,.15);
+      border: none;
+      border-radius: 14px;
+    }
+    .np-key.confirm:hover { box-shadow: 0 10px 28px rgba(42,167,161,.38); }
+    .np-key.confirm:active { transform: scale(.97); }
+
+    /* zero — wider */
+    .np-key.zero {
+      grid-column: span 1;
+    }
+
+    /* ripple */
+    @keyframes np-ripple {
+      from { transform: scale(0); opacity: .4; }
+      to   { transform: scale(4); opacity: 0; }
+    }
+    .np-ripple-circle {
+      position: absolute; border-radius: 50%;
+      width: 40px; height: 40px;
+      margin: -20px 0 0 -20px;
+      background: rgba(42,167,161,.35);
+      animation: np-ripple .5s ease-out forwards;
+      pointer-events: none;
+    }
+  </style>
+
+  <!-- OVERLAY -->
+  <div id="np-overlay"></div>
+
+  <!-- PANEL -->
+  <div id="np-panel" role="dialog" aria-label="Рақамли клавиатура">
+    <div class="np-handle"></div>
+    <div class="np-display">
+      <span class="np-display-label" id="np-label">Қиймат</span>
+      <span class="np-display-val"   id="np-val"></span>
+    </div>
+    <div class="np-grid">
+      <button class="np-key digit" data-k="7">7</button>
+      <button class="np-key digit" data-k="8">8</button>
+      <button class="np-key digit" data-k="9">9</button>
+      <button class="np-key digit" data-k="4">4</button>
+      <button class="np-key digit" data-k="5">5</button>
+      <button class="np-key digit" data-k="6">6</button>
+      <button class="np-key digit" data-k="1">1</button>
+      <button class="np-key digit" data-k="2">2</button>
+      <button class="np-key digit" data-k="3">3</button>
+      <button class="np-key dot"   data-k=".">·</button>
+      <button class="np-key digit zero" data-k="0">0</button>
+      <button class="np-key back"  data-k="back"><i class="fas fa-delete-left"></i></button>
+      <button class="np-key confirm" data-k="ok">
+        <i class="fas fa-check" style="margin-right:7px"></i>Тасдиқлаш
+      </button>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    const overlay = document.getElementById('np-overlay');
+    const panel   = document.getElementById('np-panel');
+    const npVal   = document.getElementById('np-val');
+    const npLabel = document.getElementById('np-label');
+
+    let activeInput = null;   // the real input element
+    let buf = '';             // current buffer string
+
+    /* ── Format number with spaces every 3 digits (display only) ── */
+    function formatDisplay(s) {
+      if (!s) return '0';
+      const parts = s.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+      return parts.join('.');
+    }
+
+    /* ── Which inputs should trigger numpad ── */
+    function isNumericInput(el) {
+      if (!el || el.readOnly || el.disabled) return false;
+      if (el.tagName !== 'INPUT') return false;
+      if (el.dataset.noNumpad !== undefined) return false;  // explicit opt-out
+      if (el.type === 'number') return true;
+      if (el.getAttribute('inputmode') === 'numeric') return true;
+      if (el.dataset.numpad !== undefined) return true;
+      return false;
+    }
+
+    /* ── Open ── */
+    function open(input) {
+      activeInput = input;
+      // Читаем текущее значение как строку — избегаем потери '0' (0 || '' = '')
+      const raw = input.value;
+      buf = (raw !== null && raw !== undefined && raw !== '') ? String(raw) : '';
+      npVal.textContent = formatDisplay(buf) || '0';
+
+      // Label: use placeholder, aria-label, or previous sibling label text
+      let label = input.getAttribute('placeholder')
+        || input.getAttribute('aria-label')
+        || (input.closest('.form-group, .f-group, td')
+              ?.querySelector('label, .form-label')?.textContent?.trim())
+        || 'Қиймат';
+      npLabel.textContent = label;
+
+      overlay.classList.add('np-show');
+      panel.classList.add('np-show');
+
+      // Prevent native keyboard on mobile
+      input.setAttribute('readonly', 'readonly');
+    }
+
+    /* ── Close ── */
+    function close() {
+      overlay.classList.remove('np-show');
+      panel.classList.remove('np-show');
+      if (activeInput) {
+        activeInput.removeAttribute('readonly');
+        if (buf !== '') {
+          syncValue(activeInput, buf);
+        }
+        // Форматируем только поля с атрибутом data-numpad-fmt
+        if (buf !== '' && activeInput.dataset.numpadFmt !== undefined) {
+          const inp = activeInput;
+          const raw = buf;
+          inp.dataset.raw = raw;
+          const parts = raw.split('.');
+          parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+          const formatted = parts.join('.');
+          inp.setAttribute('type', 'text');
+          inp.value = formatted;
+          if (!inp._fmtBound) {
+            inp._fmtBound = true;
+            inp.addEventListener('focus', function() {
+              const r = this.dataset.raw || this.value.replace(/[\s\u00a0]/g, '');
+              this.dataset.raw = r;
+              this.value = r;
+            });
+          }
+        }
+        var ce1 = new Event('change'); ce1.bubbles=true; activeInput.dispatchEvent(ce1);
+        var ce2 = new Event('input');  ce2.bubbles=true; activeInput.dispatchEvent(ce2);
+        activeInput = null;
+      }
+      buf = '';
+    }
+
+    /* ── Sync buf → input (правильно для type=number и text) ── */
+    function syncValue(input, value) {
+      if (!input) return;
+      // Снимаем readonly временно — иначе type=number игнорирует присвоение
+      const wasReadonly = input.hasAttribute('readonly');
+      if (wasReadonly) input.removeAttribute('readonly');
+
+      if (input.type === 'number') {
+        if (value === '' || value === '.') {
+          input.value = '';
+        } else {
+          const num = parseFloat(value);
+          if (!isNaN(num)) {
+            input.value = num;
+          }
+        }
+      } else {
+        input.value = value;
+      }
+
+      if (wasReadonly) input.setAttribute('readonly', 'readonly');
+    }
+
+    /* ── Press a key ── */
+    function press(k) {
+      if (!activeInput) return;
+
+      if (k === 'ok') {
+        close();
+        return;
+      }
+
+      if (k === 'back') {
+        buf = buf.slice(0, -1);
+      } else if (k === '.') {
+        // Точка только если не было ещё и поле не integer
+        const step = activeInput.getAttribute('step') || '';
+        const isInt = activeInput.getAttribute('data-integer') !== null
+                   || step === '1' || activeInput.type === 'text';
+        if (!buf.includes('.') && !isInt) buf += '.';
+      } else {
+        // respect maxlength
+        const max = activeInput.getAttribute('maxlength');
+        if (max && buf.replace('.', '').length >= parseInt(max)) return;
+
+        // Если буфер пустой и жмём 0 — показываем, но не добавляем ведущий 0
+        // (кроме случая "0." для десятичных)
+        if (buf === '' && k === '0') {
+          buf = '0';
+        } else if (buf === '0' && k !== '.') {
+          // Заменяем ведущий ноль новой цифрой (как в обычных числовых полях)
+          buf = k;
+        } else {
+          // respect max value
+          const maxVal = activeInput.getAttribute('max');
+          if (maxVal) {
+            const test = parseFloat(buf + k);
+            if (!isNaN(test) && test > parseFloat(maxVal)) return;
+          }
+          buf += k;
+        }
+      }
+
+      // sync to real input — без dispatchEvent чтобы не триггерить форматтеры страницы
+      syncValue(activeInput, buf);
+      npVal.textContent = formatDisplay(buf);
+    }
+
+    /* ── Ripple effect ── */
+    function ripple(btn, e) {
+      const r = document.createElement('span');
+      r.className = 'np-ripple-circle';
+      const rect = btn.getBoundingClientRect();
+      const x = (e.clientX || rect.left + rect.width/2) - rect.left;
+      const y = (e.clientY || rect.top  + rect.height/2) - rect.top;
+      r.style.left = x + 'px';
+      r.style.top  = y + 'px';
+      btn.appendChild(r);
+      setTimeout(() => r.remove(), 500);
+    }
+
+    /* ── Bind keys ── */
+    panel.querySelectorAll('.np-key').forEach(btn => {
+      btn.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        ripple(btn, e);
+        const k = btn.dataset.k;
+        press(k);
+        // haptic
+        if (navigator.vibrate) navigator.vibrate(8);
+      });
+    });
+
+    /* ── Close on overlay click ── */
+    overlay.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      close();
+    });
+
+    /* ── Focus delegation (document-wide) ── */
+    document.addEventListener('focusin', e => {
+      const el = e.target;
+      if (isNumericInput(el)) {
+        // slight delay so click event resolves
+        setTimeout(() => open(el), 10);
+      } else {
+        // close if clicked elsewhere
+        if (!panel.contains(el)) close();
+      }
+    }, true);
+
+    /* ── Also watch dynamically added inputs (MutationObserver) ── */
+    const mo = new MutationObserver(mutations => {
+      mutations.forEach(m => m.addedNodes.forEach(node => {
+        if (node.nodeType !== 1) return;
+        const inputs = node.matches?.('input') ? [node]
+          : [...(node.querySelectorAll?.('input') || [])];
+        inputs.forEach(inp => {
+          if (isNumericInput(inp)) {
+            // already handled by focusin
+          }
+        });
+      }));
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+  })();
+  </script>
+
+  {% block extra_js %}{% endblock %}
+
+  <!-- ═══ PWA Service Worker ═══ -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/service-worker.js')
+          .then(reg => console.log('SW registered:', reg.scope))
+          .catch(err => console.log('SW error:', err));
+      });
+    }
+
+    // iOS: показать баннер "Добавить на экран"
+    window.addEventListener('load', () => {
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isStandalone = window.navigator.standalone === true;
+      const dismissed = localStorage.getItem('pwa-banner-dismissed');
+
+      if (isIOS && !isStandalone && !dismissed) {
+        const banner = document.createElement('div');
+        banner.id = 'pwa-ios-banner';
+        banner.innerHTML = `
+          <div style="
+            position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+            background:#1E4A54; color:white; border-radius:16px;
+            padding:14px 18px; box-shadow:0 8px 32px rgba(0,0,0,0.35);
+            display:flex; align-items:center; gap:12px; z-index:9999;
+            max-width:320px; width:calc(100vw - 40px); font-family:inherit;
+            animation: slideUp .4s ease;
+          ">
+            <img src="/static/apple-touch-icon.png" style="width:40px;height:40px;border-radius:10px;flex-shrink:0">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:14px">BS Textile</div>
+              <div style="font-size:12px;opacity:.8;margin-top:2px">
+                Экранга қўшиш: <b>⎙</b> → <b>«Экранга қўшиш»</b>
+              </div>
+            </div>
+            <button onclick="document.getElementById('pwa-ios-banner').remove();localStorage.setItem('pwa-banner-dismissed','1')"
+              style="background:rgba(255,255,255,.15);border:none;color:white;
+                     width:28px;height:28px;border-radius:50%;cursor:pointer;
+                     font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+              ×
+            </button>
+          </div>
+          <style>
+            @keyframes slideUp { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+          </style>`;
+        document.body.appendChild(banner);
+      }
+    });
+  </script>
+</body>
+</html>

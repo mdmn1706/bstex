@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+
+{% block title %}Буюртма қўшиш{% endblock %}
+{% block brand_subtitle %}Янги буюртма{% endblock %}
+
+{% block nav_items %}
+<a href="/orders" class="nav-btn"><i class="fas fa-arrow-left"></i> Орқага</a>
+<a href="/active-orders" class="nav-btn"><i class="fas fa-clipboard-list"></i> Буюртмалар</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap');
+  .ao-wrap { font-family: 'Sora', sans-serif; max-width: 960px; margin: 0 auto; }
+
+  /* ── Page header ── */
+  .ao-hero {
+    display: flex; align-items: center; gap: 20px;
+    margin-bottom: 36px;
+  }
+  .ao-hero-icon {
+    width: 62px; height: 62px; border-radius: 18px;
+    background: var(--gradient-primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; color: white; flex-shrink: 0;
+    box-shadow: 0 12px 28px rgba(42,167,161,.25);
+  }
+  .ao-hero h2 { font-size: 1.85rem; font-weight: 800; color: var(--deep); margin-bottom: 4px; }
+  .ao-hero p  { color: var(--text-light); font-size: .95rem; }
+
+  /* ── Steps indicator ── */
+  .steps {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 36px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 14px 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-soft);
+    overflow-x: auto;
+  }
+  .step-item {
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+  }
+  .step-dot {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+    border: 2px solid rgba(30,74,84,.15);
+    color: var(--text-light);
+    background: white;
+    transition: var(--t);
+  }
+  .step-dot.done   { background: var(--gradient-primary); color: white; border-color: transparent; }
+  .step-dot.active { background: rgba(42,167,161,.12); color: var(--accent); border-color: var(--accent); }
+  .step-name { font-size: .82rem; font-weight: 600; color: var(--text-light); white-space: nowrap; }
+  .step-name.active { color: var(--deep); }
+  .step-sep { width: 28px; height: 2px; background: rgba(30,74,84,.1); margin: 0 4px; flex-shrink: 0; }
+
+  /* ── Form panel ── */
+  .form-panel {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 36px;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 24px;
+  }
+
+  .panel-title {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 1.05rem; font-weight: 800;
+    color: var(--deep); margin-bottom: 26px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(30,74,84,.08);
+  }
+  .panel-title i {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: rgba(42,167,161,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 15px; flex-shrink: 0;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  .fg { display: flex; flex-direction: column; }
+  .fg label {
+    font-size: .82rem; font-weight: 700;
+    color: var(--deep); margin-bottom: 7px;
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  .fg .req { color: var(--accent); }
+  .fg input, .fg select, .fg textarea {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(30,74,84,.12);
+    background: rgba(255,255,255,.9);
+    font-size: .95rem; color: var(--text);
+    font-family: 'Sora', inherit;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .fg input:focus, .fg select:focus, .fg textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(42,167,161,.1);
+  }
+  .fg input::placeholder, .fg textarea::placeholder { color: #b0b8b8; }
+  .fg input:disabled { background: rgba(0,0,0,.04); color: var(--text-light); cursor: not-allowed; }
+  .fg .hint { font-size: .8rem; color: var(--text-light); margin-top: 5px; }
+
+  /* ── Color/Size generator ── */
+  .cs-inputs { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+  .cs-inputs .fg { flex: 1; min-width: 200px; }
+
+  .gen-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 50px;
+    background: var(--gradient-warm); color: var(--text);
+    border: none; font-weight: 700; font-size: .88rem;
+    cursor: pointer; transition: var(--t);
+    box-shadow: 0 6px 18px rgba(212,165,116,.2);
+  }
+  .gen-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(212,165,116,.3); }
+
+  /* ── Table ── */
+  .tbl-wrap { border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(30,74,84,.08); }
+  .cs-table { width: 100%; border-collapse: collapse; }
+  .cs-table th {
+    background: var(--gradient-primary); color: white;
+    padding: 13px 16px; font-size: .88rem; font-weight: 700;
+    text-align: left;
+  }
+  .cs-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(30,74,84,.07);
+    background: rgba(255,255,255,.85);
+    font-size: .92rem;
+  }
+  .cs-table tr:last-child td { border-bottom: none; }
+  .cs-table input {
+    width: 90px; padding: 8px 10px; border-radius: 8px;
+    border: 1.5px solid rgba(30,74,84,.1); font-size: .9rem;
+    text-align: center; transition: border-color .2s;
+  }
+  .cs-table input:focus { outline: none; border-color: var(--accent); }
+  .empty-row td { text-align: center; padding: 24px; color: var(--text-light); font-style: italic; }
+
+  /* ── Calculation box ── */
+  .calc-box {
+    background: linear-gradient(135deg, rgba(42,167,161,.06), rgba(30,74,84,.03));
+    border: 1px solid rgba(42,167,161,.15);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-top: 18px;
+  }
+  .calc-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid rgba(42,167,161,.08);
+    font-size: .92rem; color: var(--text);
+  }
+  .calc-row:last-child { border-bottom: none; font-weight: 800; font-size: 1rem; color: var(--deep); }
+  .calc-val { font-weight: 700; color: var(--accent); }
+  .calc-row:last-child .calc-val { font-size: 1.1rem; }
+
+  /* ── Action buttons ── */
+  .ao-actions {
+    display: flex; justify-content: flex-end; align-items: center;
+    gap: 14px; flex-wrap: wrap;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 20px; padding: 20px 28px;
+    backdrop-filter: blur(20px); box-shadow: var(--shadow-soft);
+  }
+  .btn-cancel-ao {
+    padding: 13px 28px; border-radius: 50px;
+    background: transparent; border: 1.5px solid rgba(30,74,84,.15);
+    color: var(--text-light); font-weight: 700; font-size: .9rem;
+    cursor: pointer; transition: var(--t);
+  }
+  .btn-cancel-ao:hover { background: rgba(231,76,60,.08); border-color: rgba(231,76,60,.3); color: #d64537; }
+  .btn-save-ao {
+    padding: 13px 36px; border-radius: 50px;
+    background: var(--gradient-primary); color: white;
+    border: none; font-weight: 700; font-size: .95rem;
+    cursor: pointer; transition: var(--t);
+    box-shadow: 0 10px 28px rgba(42,167,161,.25);
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn-save-ao:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(42,167,161,.35); }
+  .btn-save-ao:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  /* ── Toast ── */
+  #toastMsg {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--deep); color: white;
+    padding: 14px 28px; border-radius: 50px;
+    font-size: .9rem; font-weight: 600;
+    box-shadow: 0 12px 32px rgba(0,0,0,.2);
+    transition: transform .3s ease, opacity .3s ease;
+    opacity: 0; z-index: 9999; white-space: nowrap;
+  }
+  #toastMsg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  #toastMsg.error { background: #d64537; }
+  #toastMsg.success { background: #27AE60; }
+
+  @media (max-width:768px) {
+    .form-panel { padding: 18px 16px; border-radius: 16px; }
+    .form-row { grid-template-columns: 1fr; gap: 12px; }
+    .ao-actions { justify-content: center; gap: 8px; }
+    .steps { gap: 4px; }
+    .ao-hero { gap: 12px; }
+    .ao-hero-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 18px; flex-shrink: 0; }
+    .ao-hero h2 { font-size: 1.3rem; }
+    .step-item { font-size: 0.8rem; padding: 6px 12px; }
+  }
+  @media (max-width: 480px) {
+    .form-panel { padding: 14px 13px; }
+    .steps { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .steps::-webkit-scrollbar { display: none; }
+    .step-item { flex-shrink: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ao-wrap">
+
+  <!-- Hero -->
+  <div class="ao-hero">
+    <div class="ao-hero-icon"><i class="fas fa-cart-plus"></i></div>
+    <div>
+      <h2>Янги буюртма яратиш</h2>
+      <p>Мижоз учун буюртма маълумотlarini тўлдиринг</p>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step-item">
+      <div class="step-dot done" id="step1dot">1</div>
+      <span class="step-name active" id="step1name">Асосий маълумот</span>
+    </div>
+    <div class="step-sep"></div>
+    <div class="step-item">
+      <div class="step-dot" id="step2dot">2</div>
+      <span class="step-name" id="step2name">Ранглар ва ўлчамлар</span>
+    </div>
+    <div class="step-sep"></div>
+    <div class="step-item">
+      <div class="step-dot" id="step3dot">3</div>
+      <span class="step-name" id="step3name">Нарх ва сана</span>
+    </div>
+    <div class="step-sep"></div>
+    <div class="step-item">
+      <div class="step-dot" id="step4dot">4</div>
+      <span class="step-name" id="step4name">Изоҳ</span>
+    </div>
+  </div>
+
+  <form id="addOrderForm" autocomplete="off">
+
+    <!-- Panel 1: Main info -->
+    <div class="form-panel">
+      <div class="panel-title"><i class="fas fa-info-circle"></i> Асосий маълумот</div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Буюртма артикули <span class="req">*</span></label>
+          <input type="text" id="orderCode" autocomplete="off" placeholder="Масалан: TP-2024-001" required>
+        </div>
+        <div class="fg">
+          <label>Модел <span class="req">*</span></label>
+          <input type="text" id="model" autocomplete="off" placeholder="Масалан: Классик кўйлак" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Мижоз <span class="req">*</span></label>
+          <input type="text" id="client" autocomplete="off" placeholder="Ф.И.Ш. ёки компания номи" required>
+        </div>
+        <div class="fg">
+          <label>Умумий миқдор (авт.)</label>
+          <input type="number" id="quantity" placeholder="Жадвалдан автоматик ҳисобланади" min="1" readonly>
+          <div class="hint">Рангlar/ўлчамлар жадвалидан автоматик тўлдирилади</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Colors & Sizes -->
+    <div class="form-panel">
+      <div class="panel-title"><i class="fas fa-palette"></i> Ранглар ва ўлчамлар</div>
+      <div class="cs-inputs">
+        <div class="fg">
+          <label>Рангlar (вергул билан) <span class="req">*</span></label>
+          <input type="text" id="colors" placeholder="Қизил, Кўк, Яшил">
+        </div>
+        <div class="fg">
+          <label>Ўлчамлар (вергул билан) <span class="req">*</span></label>
+          <input type="text" id="sizes" placeholder="S, M, L, XL">
+        </div>
+      </div>
+      <button type="button" class="gen-btn" id="generateRowsBtn">
+        <i class="fas fa-table"></i> Жадвал яратиш
+      </button>
+      <div class="tbl-wrap" style="margin-top:18px;">
+        <table class="cs-table">
+          <thead>
+            <tr>
+              <th>Ранг</th>
+              <th>Ўлчам</th>
+              <th>Миқдор, шт.</th>
+            </tr>
+          </thead>
+          <tbody id="colorsSizesTableBody">
+            <tr class="empty-row">
+              <td colspan="3">Юқорида рангlar ва ўлчамlarni киритинг, «Жадвал яратиш» тугмасини босинг</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Panel 3: Date & Price -->
+    <div class="form-panel">
+      <div class="panel-title"><i class="fas fa-calendar-alt"></i> Санаlар ва нарх</div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Қабул қилиш санаси <span class="req">*</span></label>
+          <input type="date" id="orderDate" required>
+        </div>
+        <div class="fg">
+          <label>Юклаш санаси <span class="req">*</span></label>
+          <input type="date" id="shipmentDate" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Валюта <span class="req">*</span></label>
+          <select id="currency" required>
+            <option value="">Валютани танланг</option>
+            <option value="UZS">UZS — Ўзбек сўми</option>
+            <option value="USD">USD — АҚШ доллари</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Доллар курси</label>
+          <input type="text" inputmode="decimal" data-numpad data-numpad-fmt id="exchangeRate" placeholder="Масалан: 12700" step="0.01" min="0" disabled>
+          <div class="hint">Фақат USD танланганда керак</div>
+        </div>
+        <div class="fg">
+          <label>Бирлик нархи <span class="req">*</span></label>
+          <input type="text" inputmode="decimal" data-numpad data-numpad-fmt id="pricePerUnit" placeholder="0.00" step="0.01" min="0" required>
+        </div>
+      </div>
+
+      <div class="calc-box">
+        <div class="calc-row"><span>Маҳсулот миқдори:</span><span class="calc-val" id="calcQuantity">0 шт.</span></div>
+        <div class="calc-row"><span>Бирлик нархи:</span><span class="calc-val" id="calcPrice">0.00</span></div>
+        <div class="calc-row"><span><strong>Умумий сумма:</strong></span><span class="calc-val" id="calcTotal">0.00</span></div>
+      </div>
+    </div>
+
+    <!-- Panel 4: Notes -->
+    <div class="form-panel">
+      <div class="panel-title"><i class="fas fa-sticky-note"></i> Изоҳ (ихтиёрий)</div>
+      <div class="fg">
+        <textarea id="notes" rows="3" placeholder="Буюртмага қўшимча маълумотлар..."></textarea>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="ao-actions">
+      <button type="button" class="btn-cancel-ao" onclick="window.location.href='/orders'">
+        <i class="fas fa-times"></i> Бекор қилиш
+      </button>
+      <button type="submit" class="btn-save-ao" id="saveBtn">
+        <i class="fas fa-check"></i> Буюртмани сақлаш
+      </button>
+    </div>
+  </form>
+</div>
+
+<div id="toastMsg"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const toast = (msg, type='') => {
+  const el = document.getElementById('toastMsg');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  setTimeout(() => el.className = '', 3200);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+
+  document.getElementById('quantity').addEventListener('input', updateCalc);
+  document.getElementById('pricePerUnit').addEventListener('input', updateCalc);
+  document.getElementById('currency').addEventListener('change', () => { toggleRate(); updateCalc(); });
+  document.getElementById('exchangeRate').addEventListener('input', updateCalc);
+
+  toggleRate();
+  updateCalc();
+  updateSteps();
+});
+
+function toggleRate() {
+  const cur = document.getElementById('currency').value;
+  const el = document.getElementById('exchangeRate');
+  el.disabled = cur !== 'USD';
+  if (el.disabled) el.value = '';
+}
+
+document.getElementById('generateRowsBtn').addEventListener('click', () => {
+  const colors = document.getElementById('colors').value.split(',').map(c => c.trim()).filter(Boolean);
+  const sizes  = document.getElementById('sizes').value.split(',').map(s => s.trim()).filter(Boolean);
+  if (!colors.length || !sizes.length) { toast('Ранглар ва ўлчамlarni киритинг', 'error'); return; }
+
+  const tbody = document.getElementById('colorsSizesTableBody');
+  tbody.innerHTML = '';
+  colors.forEach(color => {
+    sizes.forEach(size => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${esc(color)}</td>
+        <td>${esc(size)}</td>
+        <td><input type="number" min="0" value="0" class="csqty" data-color="${esc(color)}" data-size="${esc(size)}"></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+  document.querySelectorAll('.csqty').forEach(i => i.addEventListener('input', updateTotalFromTable));
+  updateTotalFromTable();
+  updateSteps();
+});
+
+function updateTotalFromTable() {
+  let total = 0;
+  document.querySelectorAll('.csqty').forEach(i => total += parseInt(i.value) || 0);
+  document.getElementById('quantity').value = total;
+  updateCalc();
+}
+
+function updateCalc() {
+  const qty = parseInt(document.getElementById('quantity').value) || 0;
+  const priceInp = document.getElementById('pricePerUnit');
+  const rateInp  = document.getElementById('exchangeRate');
+  const price = parseFloat(priceInp.dataset.raw || priceInp.value) || 0;
+  const cur = document.getElementById('currency').value;
+  const rate = parseFloat(rateInp.dataset.raw || rateInp.value) || 0;
+
+  document.getElementById('calcQuantity').textContent = qty + ' шт.';
+  document.getElementById('calcPrice').textContent = price.toFixed(2) + (cur ? ' ' + cur : '');
+
+  let totalStr;
+  const raw = qty * price;
+  if (cur === 'USD' && rate > 0)
+    totalStr = (raw * rate).toLocaleString('ru-RU') + ' UZS ≈ ' + raw.toFixed(2) + ' USD';
+  else if (cur === 'USD')
+    totalStr = raw.toFixed(2) + ' USD (курс киритинг)';
+  else if (cur === 'UZS')
+    totalStr = raw.toLocaleString('ru-RU') + ' UZS';
+  else
+    totalStr = raw.toFixed(2);
+
+  document.getElementById('calcTotal').textContent = totalStr;
+  updateSteps();
+}
+
+function updateSteps() {
+  const hasBasic = document.getElementById('orderCode').value && document.getElementById('model').value && document.getElementById('client').value;
+  const hasTable = document.querySelectorAll('.csqty').length > 0;
+  const hasPrice = document.getElementById('currency').value && document.getElementById('pricePerUnit').value;
+
+  const marks = [hasBasic, hasTable, hasPrice, true];
+  marks.forEach((done, i) => {
+    const dot  = document.getElementById(`step${i+1}dot`);
+    const name = document.getElementById(`step${i+1}name`);
+    dot.className  = 'step-dot ' + (done ? 'done' : '');
+    name.className = 'step-name ' + (done ? 'active' : '');
+  });
+}
+
+['orderCode','model','client'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateSteps);
+});
+
+function collectItems() {
+  return [...document.querySelectorAll('.csqty')]
+    .filter(i => parseInt(i.value) > 0)
+    .map(i => ({ color: i.dataset.color, size: i.dataset.size, qty: parseInt(i.value) }));
+}
+
+document.getElementById('addOrderForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const payload = {
+    order_code:     document.getElementById('orderCode').value.trim(),
+    model:          document.getElementById('model').value.trim(),
+    client:         document.getElementById('client').value.trim(),
+    order_date:     document.getElementById('orderDate').value,
+    shipment_date:  document.getElementById('shipmentDate').value,
+    currency:       document.getElementById('currency').value,
+    exchange_rate:  (document.getElementById('exchangeRate').dataset.raw || document.getElementById('exchangeRate').value) || null,
+    price_per_unit: document.getElementById('pricePerUnit').dataset.raw || document.getElementById('pricePerUnit').value,
+    notes:          document.getElementById('notes').value.trim(),
+    items:          collectItems()
+  };
+
+  if (!payload.order_code || !payload.model || !payload.client || !payload.order_date || !payload.shipment_date || !payload.currency) {
+    toast('Барча мажбурий майдонlarni тўлдиринг', 'error'); return;
+  }
+  if (!payload.items.length) {
+    toast('Ранг/ўлчам жадвалida камида биtta миқдор > 0 бўлиши керак', 'error'); return;
+  }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сақланмоқда...';
+
+  try {
+    const res = await fetch('/api/orders/add', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) { toast(data.message || 'Хатолик юз берди', 'error'); return; }
+    toast('Буюртма муваффақиятли сақланди!', 'success');
+    setTimeout(() => window.location.href = '/active-orders', 1200);
+  } catch(err) {
+    toast('Тармоқ хатолиги: ' + err, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check"></i> Буюртмани сақлаш';
+  }
+});
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Форматтер суммалар ──
+function setupAmountFmt(inp) {
+  if (!inp || inp.disabled) return;
+  function fmt(v) {
+    const s = String(v).replace(/[\s\u00a0,]/g, '');
+    if (!s || isNaN(parseFloat(s))) return s;
+    const parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+    return parts.join('.');
+  }
+  function applyFmt() {
+    const raw = String(inp.value).replace(/[\s\u00a0,]/g, '');
+    if (!raw || raw === '0') return;
+    inp.dataset.raw = raw;
+    inp.type = 'text';
+    inp.value = fmt(raw);
+  }
+  function clearFmt() {
+    inp.type = 'number';
+    inp.value = inp.dataset.raw || '';
+  }
+  inp.addEventListener('blur',   applyFmt);
+  inp.addEventListener('focus',  clearFmt);
+  inp.addEventListener('change', function() { if (document.activeElement !== inp) applyFmt(); });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  setupAmountFmt(document.getElementById('pricePerUnit'));
+  setupAmountFmt(document.getElementById('exchangeRate'));
+});
+</script>
+{% endblock %}

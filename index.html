@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>BS Textile | Панель</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root{
+      --bg: #F8F5F0;
+      --deep: #1E4A54;
+      --accent: #2AA7A1;
+      --accent-light: #52D6C9;
+      --warm: #D4A574;
+      --warm-light: #F0D8B8;
+      --text: #2C3E50;
+      --text-light: #697777;
+
+      --glass: rgba(255, 255, 255, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.3);
+      --shadow-soft: 0 25px 60px rgba(30, 74, 84, 0.08);
+      --shadow-deep: 0 35px 80px rgba(30, 74, 84, 0.12);
+
+      --gradient-primary: linear-gradient(135deg, var(--accent) 0%, var(--deep) 100%);
+      --gradient-warm: linear-gradient(135deg, var(--warm) 0%, #E8C39E 100%);
+      --gradient-bg: linear-gradient(135deg, #F8F5F0 0%, #F0EBE3 100%);
+
+      --r-xl: 28px;
+      --r-lg: 22px;
+      --r-md: 16px;
+      --r-sm: 12px;
+
+      --t: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    *{ box-sizing: border-box; margin: 0; padding: 0; }
+    html, body{ height: 100%; overflow-x: hidden; }
+
+    body{
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--gradient-bg);
+      color: var(--text);
+      position: relative;
+    }
+
+    .fabric-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(42, 167, 161, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(212, 165, 116, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(30, 74, 84, 0.05) 0%, transparent 50%);
+    }
+
+    .threads { position: fixed; inset: 0; z-index: 1; opacity: 0.4; }
+    .thread{
+      position: absolute;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent, var(--accent-light), var(--warm), transparent);
+      animation: thread-float 15s linear infinite;
+      filter: blur(0.5px);
+    }
+    @keyframes thread-float {
+      0% { transform: translateY(-100%) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(100%) rotate(360deg); opacity: 0; }
+    }
+
+    .fabric-pattern{
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(42, 167, 161, 0.03) 2px, rgba(42, 167, 161, 0.03) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(212, 165, 116, 0.03) 2px, rgba(212, 165, 116, 0.03) 4px);
+      background-size: 40px 40px;
+      z-index: 1;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .needles{ position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+    .needle{
+      position: absolute;
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--deep), transparent);
+      border-radius: 2px;
+      animation: needle-float 20s linear infinite;
+      opacity: 0.3;
+    }
+    .needle::before{
+      content:'';
+      position:absolute;
+      right:0;
+      top:50%;
+      transform: translateY(-50%);
+      width:8px;height:8px;
+      background: var(--accent);
+      border-radius:50%;
+    }
+    @keyframes needle-float {
+      0% { transform: translateX(-100px) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateX(calc(100vw + 100px)) rotate(360deg); opacity: 0; }
+    }
+
+    .app{ position: relative; z-index: 10; min-height: 100vh; display:flex; flex-direction:column; }
+
+    .header{
+      padding: 24px 32px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:24px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      padding: 16px 20px;
+      border-radius: var(--r-xl);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+      transition: var(--t);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo{
+      width: 56px; height:56px;
+      border-radius: 16px;
+      background: #1E4A54;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 15px 35px rgba(42, 167, 161, 0.25), 0 5px 15px rgba(30, 74, 84, 0.15);
+    }
+
+    .logo i{ color:white; font-size:24px; }
+
+    .brand-text h1{
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+      line-height: 1.2;
+      background: linear-gradient(135deg, var(--deep), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip:text;
+    }
+
+    .brand-text p{
+      margin-top:4px;
+      font-size:14px;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    .status-indicator{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding: 12px 20px;
+      border-radius: var(--r-lg);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+    }
+    .status-dot{
+      width:10px;height:10px;border-radius:50%;
+      background: linear-gradient(135deg, #2AA7A1, #1E4A54);
+      box-shadow: 0 0 15px rgba(42, 167, 161, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse{ 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(1.1)} }
+
+    .status-text{ font-size:14px; font-weight:600; }
+    .status-time{ font-size:13px; color: var(--text-light); font-weight:500; }
+
+    .main{
+      flex:1;
+      padding: 0 32px 32px;
+      max-width: 1400px;
+      width:100%;
+      margin: 0 auto;
+    }
+
+    .modules-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
+      gap:24px;
+    }
+
+    .module-card{
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+      padding: 28px;
+      min-height: 220px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--t);
+      cursor: pointer;
+      display:flex;
+      flex-direction: column;
+      text-decoration:none;
+      color:inherit;
+    }
+
+    .module-card:hover{
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: var(--shadow-deep);
+      border-color: rgba(42, 167, 161, 0.3);
+    }
+
+    .module-icon{
+      width: 64px; height:64px;
+      border-radius: 18px;
+      background: var(--gradient-primary);
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom: 20px;
+      box-shadow: 0 15px 35px rgba(42, 167, 161, 0.25), 0 5px 15px rgba(30, 74, 84, 0.15);
+    }
+    .module-icon.warm{ background: var(--gradient-warm); }
+    .module-icon i{ color:white; font-size:26px; }
+    .module-icon.warm i{ color: var(--text); }
+
+    .module-content h3{ font-size:20px; font-weight:800; color: var(--deep); margin-bottom:12px; }
+    .module-content p{ font-size:15px; color: var(--text-light); line-height:1.5; margin-bottom:20px; }
+
+    .module-tags{ display:flex; gap:8px; flex-wrap: wrap; margin-top:auto; }
+    .module-tag{
+      padding: 6px 12px;
+      border-radius: var(--r-sm);
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--glass-border);
+      color: var(--text-light);
+      font-size:12px;
+      font-weight:600;
+    }
+
+    .module-arrow{
+      position:absolute;
+      bottom: 28px;
+      right: 28px;
+      width:44px;height:44px;
+      border-radius:14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      display:flex; align-items:center; justify-content:center;
+      color: var(--deep);
+      transition: var(--t);
+    }
+
+    .footer{
+      padding: 24px 32px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      color: var(--text-light);
+      font-size:14px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width:100%;
+    }
+    .footer-info{
+      padding: 14px 20px;
+      border-radius: var(--r-lg);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+    }
+
+    .logout-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 14px 24px;
+      border-radius: var(--r-lg);
+      background: var(--gradient-primary);
+      color:white;
+      font-weight:700;
+      font-size:15px;
+      text-decoration:none;
+      border:none;
+      cursor:pointer;
+      box-shadow: 0 15px 35px rgba(42, 167, 161, 0.25), 0 5px 15px rgba(30, 74, 84, 0.15);
+      transition: var(--t);
+    }
+
+    @media (max-width: 768px){
+      .header{ flex-direction: row; align-items: center; padding: 10px 14px; gap: 10px; }
+      .brand{ padding: 8px 12px; gap: 10px; }
+      .logo{ width:40px!important; height:40px!important; border-radius:12px!important; }
+      .logo span{ font-size:20px!important; }
+      .brand-text h1{ font-size:15px!important; }
+      .brand-text p{ font-size:11px!important; }
+      .status-indicator{ padding:8px 10px; gap:6px; }
+      .status-text{ font-size:11px!important; }
+      .status-time{ font-size:10px!important; }
+
+      .main{ padding: 0 12px 16px; }
+
+      /* Карточки — 2 колонки на телефоне */
+      .modules-grid{
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .module-card{
+        padding: 16px 14px;
+        min-height: 160px;
+        border-radius: 16px;
+      }
+
+      /* Иконка меньше */
+      .module-icon{
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 12px !important;
+        margin-bottom: 12px !important;
+      }
+
+      .module-icon i{ font-size: 18px !important; }
+
+      /* Текст компактнее */
+      .module-content h3{
+        font-size: 13px !important;
+        margin-bottom: 6px !important;
+        line-height: 1.3;
+      }
+
+      .module-content p{
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+        margin-bottom: 10px !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .module-tags{ gap: 4px; }
+      .module-tag{
+        padding: 3px 8px;
+        font-size: 10px !important;
+      }
+
+      /* Стрелка — меньше */
+      .module-arrow{
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 9px !important;
+        bottom: 14px !important;
+        right: 14px !important;
+        font-size: 12px;
+      }
+
+      .footer{ flex-direction: column; padding: 14px 12px; gap: 10px; }
+      .footer-info{ text-align:center; font-size:12px; padding:10px 14px; }
+      .logout-btn{ justify-content: center; font-size:14px; padding:12px 20px; }
+    }
+
+    /* До 400px — ещё компактнее */
+    @media (max-width: 400px){
+      .header{ padding: 8px 10px; }
+      .brand{ padding: 6px 10px; gap: 8px; }
+      .logo{ width:34px!important; height:34px!important; border-radius:10px!important; }
+      .logo span{ font-size:17px!important; }
+      .brand-text h1{ font-size:13px!important; }
+      .brand-text p{ display:none; }
+
+      .modules-grid{ gap: 8px; }
+      .module-card{ padding: 12px 10px; min-height: 140px; }
+      .module-icon{ width:36px!important; height:36px!important; margin-bottom:8px!important; }
+      .module-icon i{ font-size:15px!important; }
+      .module-content h3{ font-size:12px!important; }
+      .module-content p{ font-size:10px!important; }
+    }
+
+    /* PWA standalone — скрыть статус-индикатор */
+    @media all and (display-mode: standalone) {
+      .status-indicator { display: none !important; }
+      .header {
+        padding-top: max(12px, env(safe-area-inset-top)) !important;
+        padding-left: max(12px, env(safe-area-inset-left)) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
+      }
+      .footer {
+        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="fabric-bg"></div>
+  <div class="fabric-pattern"></div>
+  <div class="threads" id="threads"></div>
+  <div class="needles" id="needles"></div>
+
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="logo" style="background:#1E4A54;border-radius:16px;"><span style="color:#E8E0D5;font-size:30px;font-weight:900;font-style:normal;font-family:Georgia,'Times New Roman',serif;letter-spacing:-1px;line-height:1;">bs</span></div>
+        <div class="brand-text">
+          <h1>BS Textile</h1>
+          <p>Ишлаб чиқаришни бошқариш панели</p>
+        </div>
+      </div>
+
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <div>
+          <div class="status-text">Тизим фаол</div>
+          <div class="status-time" id="currentTime">—</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- role injected via Jinja: {{ role }} -->
+      <div class="modules-grid" id="modulesGrid">
+        <!-- cards rendered by JS based on role -->
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-info">© BS Textile — Ишлаб чиқаришни бошқариш панели</div>
+      <button class="logout-btn" onclick="window.location.href='/logout'">
+        <i class="fas fa-right-from-bracket"></i>
+        Тизимдан чиқиш
+      </button>
+    </footer>
+  </div>
+
+  <script>
+    // Скрыть статус если запущено как PWA (iOS не поддерживает display-mode в CSS)
+    if (window.navigator.standalone === true || window.matchMedia('(display-mode:standalone)').matches) {
+      document.addEventListener('DOMContentLoaded', function() {
+        var si = document.querySelector('.status-indicator');
+        if (si) si.style.display = 'none';
+      });
+    }
+
+    // Role-based navigation
+    (function renderModules() {
+      const role = {{ role | tojson }};
+      const ALL_ROLES = ['Администратор', 'Менеджер', 'Директор'];
+      const FINANCE_ROLES = ['Бухгалтер'];
+      const PRODUCTION_ROLES = ['Мастер раскроя', 'Мастер пошива', 'Мастер упаковки'];
+      const WAREHOUSE_ROLES = ['Складчик'];
+
+      const modules = [
+        {
+          href: '/users',
+          icon: 'fas fa-users-gear',
+          title: 'Фойдаланувчилар',
+          desc: 'Ходимлар, роллар ва кириш ҳуқуқларини бошқариш. Ҳаракатларни назорат қилиш ва тизим аудити.',
+          tags: ['Ролlar', 'Ходимлар', 'Аудит'],
+          warm: false,
+          roles: ALL_ROLES
+        },
+        {
+          href: '/finance',
+          icon: 'fas fa-chart-pie',
+          title: 'Молия',
+          desc: 'Харажатларни ҳисобга олиш, бюджетни бошқариш, харажат категориялари ва молиявий ҳисоботлар.',
+          tags: ['Бюджет', 'Ҳисоботлар', 'Аналитика'],
+          warm: true,
+          roles: [...ALL_ROLES, ...FINANCE_ROLES]
+        },
+        {
+          href: '/orders',
+          icon: 'fas fa-clipboard-list',
+          title: 'Буюртмалар',
+          desc: 'Буюртмалар яратиш ва кузатиш, ишлаб чиқариш босқичлари ва муддатларини назорат қилиш.',
+          tags: ['Ишлаб чиқариш', 'Назорат', 'Муддатлар'],
+          warm: false,
+          roles: ALL_ROLES
+        },
+        {
+          href: '/production',
+          icon: 'fas fa-industry',
+          title: 'Ишлаб чиқариш',
+          desc: 'Ишлаб чиқариш босқичлари: кесиш, саралаш, тикиш, тозалаш, дазмоллаш, назорат, қадоқлаш.',
+          tags: ['WIP', 'Босқичлар', 'Ҳаракатлар'],
+          warm: false,
+          roles: [...ALL_ROLES, ...PRODUCTION_ROLES, ...WAREHOUSE_ROLES]
+        },
+        {
+          href: '/warehouse',
+          icon: 'fas fa-boxes-stacked',
+          title: 'Омбор',
+          desc: 'Материалларни бошқариш, қолдиқларни назорат қилиш, товарлар келиши ва ҳисобдан чиқариш.',
+          tags: ['Материаллар', 'Инвентарь', 'Ҳисоб'],
+          warm: false,
+          roles: [...ALL_ROLES, ...FINANCE_ROLES, ...WAREHOUSE_ROLES]
+        },
+        {
+          href: '/reports',
+          icon: 'fas fa-chart-line',
+          title: 'Статистика',
+          desc: 'Ишлаб чиқаришнинг барча жиҳатлари, самарадорлик ва молия бўйича батафсил ҳисоботлар.',
+          tags: ['KPI', 'Ҳисоботлар', 'Визуализация'],
+          warm: true,
+          roles: ALL_ROLES
+        }
+      ];
+
+      const grid = document.getElementById('modulesGrid');
+      const visible = modules.filter(m => m.roles.includes(role));
+      grid.innerHTML = visible.map(m => `
+        <a href="${m.href}" class="module-card">
+          <div class="module-icon${m.warm ? ' warm' : ''}"><i class="${m.icon}"></i></div>
+          <div class="module-content">
+            <h3>${m.title}</h3>
+            <p>${m.desc}</p>
+            <div class="module-tags">${m.tags.map(t => `<span class="module-tag">${t}</span>`).join('')}</div>
+          </div>
+          <div class="module-arrow"><i class="fas fa-arrow-right"></i></div>
+        </a>
+      `).join('');
+    })();
+
+    (function createThreads() {
+      const threadsContainer = document.getElementById('threads');
+      for (let i = 0; i < 15; i++) {
+        const thread = document.createElement('div');
+        thread.className = 'thread';
+        thread.style.left = `${Math.random() * 100}%`;
+        thread.style.animationDelay = `${Math.random() * 15}s`;
+        thread.style.animationDuration = `${10 + Math.random() * 10}s`;
+        threadsContainer.appendChild(thread);
+      }
+    })();
+
+    (function createNeedles() {
+      const needlesContainer = document.getElementById('needles');
+      for (let i = 0; i < 8; i++) {
+        const needle = document.createElement('div');
+        needle.className = 'needle';
+        needle.style.top = `${Math.random() * 100}%`;
+        needle.style.animationDelay = `${Math.random() * 20}s`;
+        needle.style.animationDuration = `${15 + Math.random() * 15}s`;
+        needlesContainer.appendChild(needle);
+      }
+    })();
+
+    (function updateClock() {
+      const timeElement = document.getElementById('currentTime');
+      if (!timeElement) return;
+
+      function formatTime(date) {
+        const options = { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' };
+        return date.toLocaleDateString('ru-RU', options);
+      }
+      function update() { timeElement.textContent = formatTime(new Date()); }
+      update();
+      setInterval(update, 1000);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Буюртмалар ва хизматлар{% endblock %}
+{% block brand_subtitle %}Буюртмалар маркази{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap');
+
+  .hub-body { font-family: 'Sora', sans-serif; }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+  .stat-pill {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 18px 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: var(--t);
+  }
+  .stat-pill:hover { transform: translateY(-3px); box-shadow: var(--shadow-deep); }
+  .stat-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: white; flex-shrink: 0;
+  }
+  .stat-icon.teal  { background: linear-gradient(135deg,#2AA7A1,#1E4A54); }
+  .stat-icon.warm  { background: linear-gradient(135deg,#D4A574,#E8C39E); }
+  .stat-icon.mint  { background: linear-gradient(135deg,#27AE60,#2ecc71); }
+  .stat-icon.slate { background: linear-gradient(135deg,#697777,#8fa0a0); }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 3px; }
+  .stat-val   { font-size: 22px; font-weight: 800; color: var(--deep); line-height: 1; }
+
+  /* ── Section title ── */
+  .section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--text-light);
+    margin-bottom: 20px; padding-left: 4px;
+  }
+
+  /* ── Cards grid ── */
+  .hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 22px;
+    margin-bottom: 48px;
+  }
+
+  .hub-card {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform .3s cubic-bezier(.25,.46,.45,.94), box-shadow .3s ease;
+    box-shadow: 0 8px 32px rgba(30,74,84,.1);
+  }
+  .hub-card:hover { transform: translateY(-8px) scale(1.01); box-shadow: 0 22px 50px rgba(30,74,84,.15); }
+
+  .card-bg {
+    position: absolute; inset: 0;
+    transition: opacity .35s ease;
+  }
+  .hub-card:hover .card-bg { opacity: 1 !important; }
+
+  .card-body {
+    position: relative; z-index: 2;
+    padding: 30px 28px 28px;
+    min-height: 220px;
+    display: flex; flex-direction: column;
+  }
+
+  .card-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px;
+    border-radius: 50px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .8px;
+    margin-bottom: 22px;
+    width: fit-content;
+  }
+
+  .card-emoji { font-size: 42px; margin-bottom: 16px; display: block; }
+
+  .card-title {
+    font-size: 1.35rem; font-weight: 800;
+    line-height: 1.25; margin-bottom: 10px;
+  }
+
+  .card-desc {
+    font-size: .9rem; line-height: 1.55;
+    opacity: .75; flex: 1;
+  }
+
+  .card-arrow {
+    margin-top: 22px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: .85rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .8px;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .hub-card:hover .card-arrow { opacity: 1; transform: translateX(0); }
+
+  /* Card variants */
+  .card-v1 .card-bg { background: linear-gradient(135deg,rgba(30,74,84,.04) 0%,rgba(42,167,161,.08) 100%); }
+  .card-v1 { border: 1.5px solid rgba(42,167,161,.18); background: rgba(255,255,255,.85); backdrop-filter: blur(20px); }
+  .card-v1 .card-tag { background: rgba(42,167,161,.1); color: #1a7a75; }
+  .card-v1 .card-title { color: var(--deep); }
+  .card-v1 .card-arrow { color: var(--accent); }
+
+  .card-v2 .card-bg { background: linear-gradient(135deg,rgba(212,165,116,.06) 0%,rgba(232,195,158,.1) 100%); }
+  .card-v2 { border: 1.5px solid rgba(212,165,116,.22); background: rgba(255,255,255,.85); backdrop-filter: blur(20px); }
+  .card-v2 .card-tag { background: rgba(212,165,116,.15); color: #9a5b0f; }
+  .card-v2 .card-title { color: var(--deep); }
+  .card-v2 .card-arrow { color: var(--warm); }
+
+  .card-v3 .card-bg { background: linear-gradient(135deg,rgba(30,74,84,.05) 0%,rgba(105,119,119,.08) 100%); }
+  .card-v3 { border: 1.5px solid rgba(30,74,84,.15); background: rgba(255,255,255,.85); backdrop-filter: blur(20px); }
+  .card-v3 .card-tag { background: rgba(30,74,84,.08); color: var(--deep); }
+  .card-v3 .card-title { color: var(--deep); }
+  .card-v3 .card-arrow { color: var(--deep); }
+
+  .card-v4 {
+    border: 1.5px solid transparent;
+    background: var(--gradient-primary);
+  }
+  .card-v4 .card-bg { background: linear-gradient(135deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.12) 100%); opacity: 0; }
+  .card-v4 .card-tag { background: rgba(255,255,255,.15); color: rgba(255,255,255,.9); }
+  .card-v4 .card-title { color: white; }
+  .card-v4 .card-desc { color: rgba(255,255,255,.78); }
+  .card-v4 .card-arrow { color: rgba(255,255,255,.9); }
+
+  /* ── Quick actions ── */
+  .quick-row {
+    display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .quick-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 22px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700; font-size: .9rem;
+    transition: var(--t);
+    border: none; cursor: pointer;
+  }
+  .quick-btn.primary {
+    background: var(--gradient-primary); color: white;
+    box-shadow: 0 8px 24px rgba(42,167,161,.22);
+  }
+  .quick-btn.primary:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(42,167,161,.32); }
+  .quick-btn.secondary {
+    background: var(--glass); color: var(--deep);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(20px);
+  }
+  .quick-btn.secondary:hover { background: rgba(255,255,255,.95); border-color: rgba(42,167,161,.3); transform: translateY(-2px); }
+
+  @media (max-width:768px) {
+    .hub-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stats-bar { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+    .stat-pill { padding: 12px 13px; border-radius: 13px; gap: 10px; }
+    .stat-icon { width: 36px; height: 36px; border-radius: 9px; font-size: 14px; }
+    .stat-label { font-size: 9px; }
+    .stat-val   { font-size: 18px; }
+    .card-body { padding: 20px 18px 18px; min-height: 0; }
+    .card-emoji { font-size: 30px; margin-bottom: 10px; }
+    .card-title { font-size: 1.1rem; margin-bottom: 7px; }
+    .card-desc  { font-size: 0.82rem; }
+    .card-tag   { margin-bottom: 14px; font-size: 10px; padding: 4px 10px; }
+    .section-label { font-size: 10px; margin-bottom: 14px; }
+  }
+  @media (max-width: 480px) {
+    .hub-grid { grid-template-columns: 1fr; gap: 10px; }
+    .stats-bar { grid-template-columns: 1fr 1fr; }
+    .quick-row { gap: 8px; }
+    .quick-btn { padding: 10px 16px; font-size: 0.82rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hub-body">
+
+  <!-- Stats bar -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-pill">
+      <div class="stat-icon teal"><i class="fas fa-box-open"></i></div>
+      <div>
+        <div class="stat-label">Жорий буюртмалар</div>
+        <div class="stat-val" id="sActiveOrders">—</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-icon warm"><i class="fas fa-industry"></i></div>
+      <div>
+        <div class="stat-label">Фаол хизматлар</div>
+        <div class="stat-val" id="sActiveServices">—</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-icon mint"><i class="fas fa-check-double"></i></div>
+      <div>
+        <div class="stat-label">Якунланган</div>
+        <div class="stat-val" id="sDoneOrders">—</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-icon slate"><i class="fas fa-cubes"></i></div>
+      <div>
+        <div class="stat-label">Жами буюртмалар</div>
+        <div class="stat-val" id="sTotalOrders">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main cards -->
+  <div class="section-label">Асосий амалиётлар</div>
+  <div class="hub-grid">
+
+    <a href="/add-order" class="hub-card card-v1">
+      <div class="card-bg"></div>
+      <div class="card-body">
+        <div class="card-tag"><i class="fas fa-plus"></i> Янги</div>
+        <span class="card-emoji">🛒</span>
+        <div class="card-title">Буюртма қўшиш</div>
+        <div class="card-desc">Мижоз учун янги буюртма яратинг: модел, ранглар, ўлчамлар, нарх ва муддатни белгиланг.</div>
+        <div class="card-arrow">Ўтиш <i class="fas fa-arrow-right"></i></div>
+      </div>
+    </a>
+
+    <a href="/add-service" class="hub-card card-v2">
+      <div class="card-bg"></div>
+      <div class="card-body">
+        <div class="card-tag"><i class="fas fa-building"></i> Аутсорсинг</div>
+        <span class="card-emoji">🏭</span>
+        <div class="card-title">Хизмат қўшиш</div>
+        <div class="card-desc">Ташқи фабрикага маҳсулот топшириш. Ранглар, ўлчамлар, нарх ва тўлов усулини кўрсатинг.</div>
+        <div class="card-arrow">Ўтиш <i class="fas fa-arrow-right"></i></div>
+      </div>
+    </a>
+
+    <a href="/active-orders" class="hub-card card-v3">
+      <div class="card-bg"></div>
+      <div class="card-body">
+        <div class="card-tag"><i class="fas fa-tasks"></i> Мониторинг</div>
+        <span class="card-emoji">📋</span>
+        <div class="card-title">Жорий буюртмалар</div>
+        <div class="card-desc">Барча фаол буюртмаларни кўринг, тафсилотларни текширинг ва ҳҳолатларни янгиланг.</div>
+        <div class="card-arrow">Ўтиш <i class="fas fa-arrow-right"></i></div>
+      </div>
+    </a>
+
+    <a href="/active-services" class="hub-card card-v4">
+      <div class="card-bg"></div>
+      <div class="card-body">
+        <div class="card-tag"><i class="fas fa-sync-alt"></i> Жорий</div>
+        <span class="card-emoji">⚙️</span>
+        <div class="card-title">Жорий хизматлар</div>
+        <div class="card-desc">Фаол хизматлар рўйхати: фабрика, суммалар, ранглар, ўлчамлар ва ҳҳолатларни кузатинг.</div>
+        <div class="card-arrow">Ўтиш <i class="fas fa-arrow-right"></i></div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Quick actions -->
+  <div class="section-label">Тезкор амалиётлар</div>
+  <div class="quick-row">
+    <a href="/add-order" class="quick-btn primary"><i class="fas fa-cart-plus"></i> Янги буюртма</a>
+    <a href="/add-service" class="quick-btn secondary"><i class="fas fa-plus-circle"></i> Хизмат қўшиш</a>
+    <a href="/active-orders" class="quick-btn secondary"><i class="fas fa-eye"></i> Буюртмаларни кўриш</a>
+    <a href="/active-services" class="quick-btn secondary"><i class="fas fa-list"></i> Хизматлар рўйхати</a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const [rOrders, rServices] = await Promise.all([
+      fetch('/api/orders?limit=1000', { headers: { 'Accept': 'application/json' } }),
+      fetch('/api/services?limit=1000', { headers: { 'Accept': 'application/json' } })
+    ]);
+    const dO = await rOrders.json();
+    const dS = await rServices.json();
+
+    if (dO.success) {
+      const orders = dO.orders || [];
+      const active = orders.filter(o => o.status === 'active').length;
+      const done   = orders.filter(o => o.status === 'done').length;
+      document.getElementById('sActiveOrders').textContent = active;
+      document.getElementById('sDoneOrders').textContent   = done;
+      document.getElementById('sTotalOrders').textContent  = orders.length;
+    }
+    if (dS.success) {
+      const active = (dS.services || []).filter(s => s.status === 'active' || s.status === 'pending').length;
+      document.getElementById('sActiveServices').textContent = active;
+    }
+  } catch(e) {
+    // Stats not critical
+  }
+
+  // Stagger card entry
+  document.querySelectorAll('.hub-card, .stat-pill').forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(18px)';
+    setTimeout(() => {
+      el.style.transition = 'opacity .45s ease, transform .45s ease';
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, i * 80 + 100);
+  });
+});
+</script>
+{% endblock %}

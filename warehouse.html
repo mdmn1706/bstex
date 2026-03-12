@@ -1,0 +1,1285 @@
+{% extends "base.html" %}
+
+{% block title %}Омбор{% endblock %}
+{% block brand_subtitle %}Омборни бошқариш{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c1: #1A3540;
+  --c2: #2AA7A1;
+  --c3: #D4A574;
+  --c4: #697777;
+  --glass:  rgba(255,255,255,0.72);
+  --glass2: rgba(255,255,255,0.92);
+  --border: rgba(26,53,64,0.09);
+  --shadow: 0 8px 32px rgba(26,53,64,0.09), 0 2px 8px rgba(26,53,64,0.05);
+  --shadow-h: 0 20px 52px rgba(26,53,64,0.15);
+  --r: 20px;
+  --t: all 0.28s cubic-bezier(0.34,1.20,0.64,1);
+
+  /* section colors */
+  --sc-orders:  #2AA7A1;
+  --sc-stock:   #4A7FC1;
+  --sc-history: #7B5EA7;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body, .main { font-family:'Outfit', system-ui, sans-serif; }
+
+/* ════════ LAYOUT ════════ */
+.wh-wrap {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 26px;
+  min-height: 78vh;
+}
+
+/* ════════ SIDEBAR ════════ */
+.wh-sidebar {
+  background: var(--glass);
+  backdrop-filter: blur(22px);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 24px;
+  padding: 22px 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.sb-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--c4);
+  padding: 0 10px;
+  margin-bottom: 6px;
+}
+
+.sb-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: var(--t);
+  color: var(--c4);
+  font-family: 'Outfit', sans-serif;
+  position: relative;
+}
+
+.sb-btn:hover { background: rgba(26,53,64,0.05); color: var(--c1); }
+
+.sb-btn.active {
+  background: var(--sb-color, var(--c2));
+  color: white;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+}
+
+.sb-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: rgba(105,119,119,0.10);
+  display: flex; align-items:center; justify-content:center;
+  font-size: 15px;
+  transition: var(--t);
+  flex-shrink: 0;
+}
+.sb-btn:not(.active) .sb-icon { color: var(--sb-color, var(--c2)); }
+.sb-btn.active .sb-icon { background: rgba(255,255,255,0.20); color:white; }
+
+.sb-label { font-size: 0.95rem; font-weight: 600; }
+
+.sb-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 10px;
+}
+
+/* sub-items */
+.sb-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 44px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: var(--t);
+  color: var(--c4);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+.sb-sub:hover { background: rgba(26,53,64,0.04); color: var(--c1); }
+.sb-sub.active { background: rgba(42,167,161,0.10); color: var(--c2); font-weight: 700; }
+.sb-sub-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* ════════ MAIN ════════ */
+.wh-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ════════ SECTION HERO ════════ */
+.sec-hero {
+  background: var(--glass2);
+  backdrop-filter: blur(22px);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 24px;
+  padding: 26px 30px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.sec-hero.show { opacity:1; transform:translateY(0); }
+.sec-hero::before {
+  content:'';
+  position:absolute; top:-30%; right:-3%;
+  width:200px; height:200px; border-radius:50%;
+  background: radial-gradient(circle, rgba(42,167,161,0.09), transparent 70%);
+  pointer-events:none;
+}
+
+.sh-ico {
+  width:68px; height:68px; border-radius:20px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; color:white;
+  flex-shrink:0;
+}
+.sh-text h3 { font-size:1.7rem; font-weight:900; color:var(--c1); letter-spacing:-0.4px; }
+.sh-text p  { color:var(--c4); margin-top:4px; font-size:0.96rem; }
+.sh-badge {
+  margin-left:auto;
+  padding:7px 16px; border-radius:50px;
+  font-weight:700; font-size:0.8rem;
+  font-family:'JetBrains Mono', monospace;
+  white-space:nowrap; flex-shrink:0;
+}
+
+/* ════════ PANEL CARD ════════ */
+.panel {
+  background: var(--glass);
+  backdrop-filter: blur(22px);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 22px;
+  padding: 24px 26px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.panel.show { opacity:1; transform:translateY(0); }
+
+.panel-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--c4);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ════════ ORDER CARDS ════════ */
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.order-card {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: var(--t);
+  background: rgba(255,255,255,0.55);
+  position: relative; overflow:hidden;
+}
+.order-card::before {
+  content:''; position:absolute;
+  left:0;top:0;bottom:0; width:3px;
+  background: var(--c2);
+  border-radius:3px 0 0 3px;
+  opacity:0; transition:opacity 0.2s;
+}
+.order-card:hover { border-color:var(--c2); background:white; transform:translateY(-2px); box-shadow:var(--shadow); }
+.order-card:hover::before { opacity:1; }
+.order-card.sel { border-color:var(--c2); background:white; box-shadow:var(--shadow); }
+.order-card.sel::before { opacity:1; }
+
+.oc-code { font-family:'JetBrains Mono',monospace; font-size:0.78rem; font-weight:600; color:var(--c2); margin-bottom:3px; }
+.oc-model { font-size:0.94rem; font-weight:700; color:var(--c1); }
+.oc-client { font-size:0.8rem; color:var(--c4); margin-top:2px; }
+.oc-foot { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+.oc-qty { font-size:0.78rem; font-weight:700; color:var(--c4); font-family:'JetBrains Mono',monospace; }
+.oc-arr {
+  width:22px; height:22px; border-radius:7px;
+  background:rgba(26,53,64,0.06);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; color:var(--c4); transition:var(--t);
+}
+.order-card:hover .oc-arr, .order-card.sel .oc-arr { background:var(--c2); color:white; }
+
+/* ════════ INCOME FORM ════════ */
+.income-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.f-group { display:flex; flex-direction:column; gap:6px; }
+.f-lbl {
+  font-size:0.72rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.8px; color:var(--c4);
+}
+.f-ctrl {
+  padding:11px 14px; border-radius:11px;
+  border:1.5px solid var(--border);
+  background:rgba(255,255,255,0.7);
+  font-family:'Outfit',sans-serif; font-size:0.95rem; color:var(--c1);
+  transition:border-color 0.2s, box-shadow 0.2s; outline:none; width:100%;
+}
+.f-ctrl:focus {
+  border-color:var(--c2);
+  box-shadow:0 0 0 3px rgba(42,167,161,0.13);
+  background:white;
+}
+
+.btn-p {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:11px 22px; border-radius:11px; border:none;
+  font-family:'Outfit',sans-serif; font-size:0.94rem; font-weight:700;
+  cursor:pointer; color:white;
+  transition:var(--t);
+  white-space:nowrap;
+}
+.btn-p:hover { transform:translateY(-2px); }
+.btn-p:active { transform:scale(0.97); }
+
+.btn-g {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 18px; border-radius:11px;
+  border:1.5px solid var(--border);
+  font-family:'Outfit',sans-serif; font-size:0.92rem; font-weight:600;
+  cursor:pointer; background:rgba(255,255,255,0.65); color:var(--c1); transition:var(--t);
+}
+.btn-g:hover { border-color:var(--c2); background:white; transform:translateY(-1px); }
+
+/* ════════ STOCK TABLE ════════ */
+.stock-tbl {
+  width:100%; border-collapse:collapse;
+  border-radius:14px; overflow:hidden;
+  border:1.5px solid var(--border);
+}
+.stock-tbl thead tr { background:rgba(26,53,64,0.04); }
+.stock-tbl th {
+  padding:10px 14px; text-align:left;
+  font-size:0.72rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.8px; color:var(--c4);
+}
+.stock-tbl td {
+  padding:11px 14px;
+  border-top:1px solid rgba(26,53,64,0.05);
+  font-size:0.94rem; color:var(--c1);
+}
+.stock-tbl tbody tr:hover td { background:rgba(26,53,64,0.02); }
+.stock-tbl tbody tr:last-child td { border-bottom:none; }
+
+.qty-mono { font-family:'JetBrains Mono',monospace; font-weight:700; }
+.unit-badge {
+  display:inline-block; padding:2px 9px;
+  border-radius:50px; background:rgba(42,167,161,0.10);
+  color:var(--c2); font-size:0.78rem; font-weight:700;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* product type badges */
+.badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 10px; border-radius:50px;
+  font-size:0.75rem; font-weight:700; white-space:nowrap;
+}
+.badge-mat  { background:rgba(42,167,161,0.10); color:#1A7A76; }
+.badge-scrap{ background:rgba(239,68,68,0.10);  color:#b91c1c; }
+.badge-fin  { background:rgba(34,197,94,0.12);  color:#15803d; }
+.badge-wip  { background:rgba(249,115,22,0.12); color:#c2410c; }
+
+/* order tag in all-stock table */
+.order-tag {
+  display:inline-block; margin:2px 3px 2px 0;
+  padding:2px 9px; border-radius:50px;
+  background:rgba(26,53,64,0.07);
+  font-size:0.75rem; font-weight:700;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--c1);
+}
+
+/* expandable orders row */
+.orders-cell { max-width:280px; }
+.expand-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:2px 9px; border-radius:50px;
+  background:rgba(42,167,161,0.10); color:var(--c2);
+  font-size:0.75rem; font-weight:700;
+  cursor:pointer; border:none; font-family:inherit;
+  transition:var(--t);
+}
+.expand-btn:hover { background:rgba(42,167,161,0.20); }
+
+/* ════════ STATS STRIP ════════ */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.stat-card {
+  background: var(--glass2);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  opacity:0; transform:translateY(10px);
+  transition:opacity 0.35s ease, transform 0.35s ease;
+}
+.stat-card.show { opacity:1; transform:translateY(0); }
+.stat-label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--c4); margin-bottom:8px; }
+.stat-val { font-size:1.9rem; font-weight:900; color:var(--c1); font-family:'JetBrains Mono',monospace; line-height:1; }
+.stat-sub { font-size:0.8rem; color:var(--c4); margin-top:5px; }
+.stat-icon {
+  float:right; margin-top:-4px;
+  width:38px; height:38px; border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+}
+
+/* ════════ HISTORY LIST ════════ */
+.history-item {
+  display:flex; align-items:flex-start; gap:14px;
+  padding:14px 0;
+  border-bottom:1px solid var(--border);
+}
+.history-item:last-child { border-bottom:none; }
+
+.hi-icon {
+  width:38px; height:38px; border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; flex-shrink:0;
+}
+.hi-body { flex:1; min-width:0; }
+.hi-top { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.hi-type { font-size:0.88rem; font-weight:700; color:var(--c1); }
+.hi-order { font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--c2); font-weight:600; }
+.hi-time { font-size:0.75rem; color:var(--c4); margin-left:auto; white-space:nowrap; }
+.hi-lines { margin-top:5px; display:flex; flex-wrap:wrap; gap:5px; }
+.hi-chip {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 10px; border-radius:50px;
+  background:rgba(26,53,64,0.06); font-size:0.78rem; font-weight:600; color:var(--c1);
+}
+.hi-comment { font-size:0.82rem; color:var(--c4); margin-top:4px; font-style:italic; }
+
+/* txn type colors */
+.txn-income   { background:rgba(34,197,94,0.12);  color:#15803d; }
+.txn-issue    { background:rgba(249,115,22,0.12); color:#c2410c; }
+.txn-transfer { background:rgba(59,130,246,0.12); color:#1d4ed8; }
+.txn-writeoff { background:rgba(239,68,68,0.12);  color:#b91c1c; }
+.txn-adjust   { background:rgba(168,85,247,0.12); color:#7e22ce; }
+
+/* ════════ SEARCH ════════ */
+.search-bar {
+  position:relative; margin-bottom:16px;
+}
+.search-bar input {
+  width:100%; padding:11px 14px 11px 40px;
+  border-radius:12px; border:1.5px solid var(--border);
+  background:rgba(255,255,255,0.7);
+  font-family:'Outfit',sans-serif; font-size:0.95rem; color:var(--c1);
+  outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+}
+.search-bar input:focus { border-color:var(--c2); box-shadow:0 0 0 3px rgba(42,167,161,0.12); background:white; }
+.search-bar i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--c4); font-size:14px; }
+
+/* ════════ EMPTY / LOADER ════════ */
+.empty-box { text-align:center; padding:44px 20px; color:var(--c4); }
+.empty-box i { font-size:40px; opacity:0.2; margin-bottom:12px; display:block; }
+.empty-box p { font-size:0.96rem; }
+
+.loader { display:flex; justify-content:center; padding:30px; gap:5px; }
+.loader span {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--c2);
+  animation:ld 1.2s ease-in-out infinite;
+}
+.loader span:nth-child(2){animation-delay:0.2s}
+.loader span:nth-child(3){animation-delay:0.4s}
+@keyframes ld{0%,80%,100%{transform:scale(0.7);opacity:0.4}40%{transform:scale(1.2);opacity:1}}
+
+/* ════════ TABS ════════ */
+.tabs {
+  display:flex; gap:6px; margin-bottom:18px;
+  background:rgba(26,53,64,0.05);
+  border-radius:13px; padding:4px;
+}
+.tab-btn {
+  flex:1; padding:9px 14px; border-radius:10px; border:none;
+  font-family:'Outfit',sans-serif; font-size:0.9rem; font-weight:600;
+  cursor:pointer; transition:var(--t); color:var(--c4); background:transparent;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+}
+.tab-btn.active { background:white; color:var(--c1); box-shadow:0 2px 10px rgba(26,53,64,0.10); }
+.tab-btn:hover:not(.active) { color:var(--c1); }
+
+/* ════════ TOAST ════════ */
+#toast {
+  position:fixed; bottom:26px; right:26px;
+  padding:13px 20px; border-radius:15px;
+  font-family:'Outfit',sans-serif; font-weight:600; font-size:0.95rem;
+  z-index:9999; opacity:0; pointer-events:none;
+  transform:translateY(10px) scale(0.97);
+  transition:all 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  max-width:340px; display:flex; align-items:center; gap:10px;
+  box-shadow:0 18px 46px rgba(0,0,0,0.13);
+}
+#toast.show { opacity:1; transform:translateY(0) scale(1); }
+#toast.success { background:#f0fdf4; color:#166534; border-left:4px solid #22c55e; }
+#toast.error   { background:#fef2f2; color:#991b1b; border-left:4px solid #ef4444; }
+#toast.info    { background:#eff6ff; color:#1e40af; border-left:4px solid #3b82f6; }
+
+/* ════════ RESPONSIVE ════════ */
+@media(max-width:900px){
+  .wh-wrap { grid-template-columns:1fr; }
+  .wh-sidebar { position:static; flex-direction:row; flex-wrap:wrap; gap:6px; }
+  .sb-btn { width:auto; flex:1; min-width:120px; }
+  .sb-sub { display:none; }
+  .income-form-grid { grid-template-columns:1fr 1fr; }
+  .stats-strip { grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:600px){
+  .income-form-grid { grid-template-columns:1fr; }
+  .stats-strip { grid-template-columns:1fr 1fr; }
+  .order-grid { grid-template-columns:1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="wh-wrap">
+
+  <!-- ════ SIDEBAR ════ -->
+  <aside class="wh-sidebar">
+    <div class="sb-title">Омбор</div>
+
+    <button class="sb-btn" style="--sb-color:var(--sc-orders)" data-sec="orders" onclick="selectSection('orders')">
+      <div class="sb-icon"><i class="fas fa-boxes"></i></div>
+      <span class="sb-label">Жорий буюртмалар</span>
+    </button>
+    <button class="sb-sub" data-sub="income" onclick="selectSub('income')">
+      <span class="sb-sub-dot"></span>Тушум
+    </button>
+
+    <div class="sb-divider"></div>
+
+    <button class="sb-btn" style="--sb-color:var(--sc-stock)" data-sec="stock" onclick="selectSection('stock')">
+      <div class="sb-icon"><i class="fas fa-layer-group"></i></div>
+      <span class="sb-label">Омбордаги қолдиқлар</span>
+    </button>
+    <button class="sb-sub" data-sub="stock-by-order" onclick="selectSub('stock-by-order')">
+      <span class="sb-sub-dot"></span>Буюртма бўйича
+    </button>
+    <button class="sb-sub" data-sub="stock-all" onclick="selectSub('stock-all')">
+      <span class="sb-sub-dot"></span>Барча товарлар
+    </button>
+
+    <div class="sb-divider"></div>
+
+    <button class="sb-btn" style="--sb-color:var(--sc-history)" data-sec="history" onclick="selectSection('history')">
+      <div class="sb-icon"><i class="fas fa-history"></i></div>
+      <span class="sb-label">Ҳаракатлар тарихи</span>
+    </button>
+  </aside>
+
+  <!-- ════ MAIN ════ -->
+  <div class="wh-main" id="whMain">
+
+    <!-- Default state -->
+    <div class="panel show" id="defaultPanel">
+      <div class="empty-box" style="padding:60px 20px">
+        <i class="fas fa-warehouse" style="font-size:52px"></i>
+        <p style="font-size:1.1rem">Чап менюдан бўлимни танланг</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ══════════════════════════════════
+   STATE
+══════════════════════════════════ */
+const W = {
+  section: null,
+  sub: null,
+  orders: [],
+  catalog: { products:[], units:[], locations:[] },
+  selectedOrder: null,
+};
+
+/* ══════════════════════════════════
+   UTILS
+══════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const _icMap = { success:'fa-check-circle', error:'fa-times-circle', info:'fa-info-circle' };
+const toast = (msg, type='info', dur=3400) => {
+  const t=$('toast');
+  t.innerHTML=`<i class="fas ${_icMap[type]}"></i>${msg}`;
+  t.className=`show ${type}`; setTimeout(()=>t.className='',dur);
+};
+const api = async (m,url,b) => {
+  const r = await fetch(url,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});
+  return r.json();
+};
+
+const fmtQty = q => {
+  const n = parseFloat(q)||0;
+  return n % 1 === 0 ? n.toString() : n.toFixed(2).replace(/\.?0+$/,'');
+};
+
+const fmtDate = str => {
+  if(!str) return '—';
+  const d = new Date(str);
+  return d.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+};
+
+const TXN_LABELS = {
+  income:'Тушум', issue:'Чиқим', transfer:'Кўчириш',
+  writeoff:'Ҳисобдан чиқариш', adjust:'Тузатиш'
+};
+const TXN_ICONS = {
+  income:'fa-arrow-down', issue:'fa-arrow-up', transfer:'fa-arrows-alt-h',
+  writeoff:'fa-trash-alt', adjust:'fa-sliders-h'
+};
+const TXN_COLORS = {
+  income:'#22c55e', issue:'#f97316', transfer:'#3b82f6',
+  writeoff:'#ef4444', adjust:'#a855f7'
+};
+
+/* product name → badge type */
+const productBadge = name => {
+  const n = (name||'').toLowerCase();
+  if(n.includes('брак'))   return 'badge-scrap';
+  if(n.includes('тайёр') || n.includes('маҳсулот')) return 'badge-fin';
+  if(n.includes('кесиш') || n.includes('деталь')) return 'badge-wip';
+  return 'badge-mat';
+};
+
+/* ══════════════════════════════════
+   DATA LOAD
+══════════════════════════════════ */
+async function loadCatalog() {
+  if(W.catalog.products.length) return;
+  const r = await api('GET','/api/warehouse/catalog');
+  if(r.success) W.catalog = r;
+}
+
+async function loadOrders() {
+  const r = await api('GET','/api/orders/options?status=active');
+  W.orders = r.success ? r.orders : [];
+}
+
+/* ══════════════════════════════════
+   SECTION SELECT
+══════════════════════════════════ */
+async function selectSection(sec) {
+  W.section = sec; W.sub = null;
+
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.toggle('active',b.dataset.sec===sec));
+  document.querySelectorAll('.sb-sub').forEach(b=>b.classList.remove('active'));
+
+  const SEC_META = {
+    orders:  { label:'Жорий буюртмалар', icon:'fa-boxes',       color:'var(--sc-orders)',  desc:'Буюртмалар бўйича tovar kelishini hisobga olазам', badge:'ПРИХОД', badgeColor:'var(--sc-orders)' },
+    stock:   { label:'Омбордаги қолдиқлар',  icon:'fa-layer-group', color:'var(--sc-stock)',   desc:'Haqiqiy qoldiqlar barchaх товаров и материалов', badge:'УЧЁТ', badgeColor:'var(--sc-stock)' },
+    history: { label:'Ҳаракатлар тарихи',   icon:'fa-history',     color:'var(--sc-history)', desc:'Barcha ombor operatsiyalari jurnaliераций', badge:'ЖУРНАЛ', badgeColor:'var(--sc-history)' },
+  };
+  const m = SEC_META[sec];
+
+  const main = $('whMain');
+  main.innerHTML = `
+    <div class="sec-hero" id="secHero">
+      <div class="sh-ico" style="background:${m.color}"><i class="fas ${m.icon}"></i></div>
+      <div class="sh-text"><h3>${m.label}</h3><p>${m.desc}</p></div>
+      <div class="sh-badge" style="background:rgba(42,167,161,0.10);color:${m.color};border:1.5px solid rgba(42,167,161,0.2)">${m.badge}</div>
+    </div>
+    <div id="secContent"></div>
+  `;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('secHero').classList.add('show')));
+
+  if(sec==='orders')  await renderOrdersSection();
+  if(sec==='stock')   await renderStockSection();
+  if(sec==='history') await renderHistorySection();
+}
+
+async function selectSub(sub) {
+  W.sub = sub;
+  const secMap = { income:'orders', 'stock-by-order':'stock', 'stock-all':'stock' };
+  const sec = secMap[sub];
+  if(W.section !== sec) await selectSection(sec);
+  document.querySelectorAll('.sb-sub').forEach(b=>b.classList.toggle('active',b.dataset.sub===sub));
+
+  if(sub==='income') scrollToEl('incomeBlock');
+  if(sub==='stock-by-order') activateTab('by-order');
+  if(sub==='stock-all')      activateTab('all');
+}
+
+function scrollToEl(id){ const el=$(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+function activateTab(tab){ const btn=document.querySelector(`[data-tab="${tab}"]`); if(btn) btn.click(); }
+
+/* ══════════════════════════════════
+   SECTION: ORDERS (ПРИХОД)
+══════════════════════════════════ */
+async function renderOrdersSection() {
+  await Promise.all([loadOrders(), loadCatalog()]);
+  $('secContent').innerHTML = `
+    <!-- Stats -->
+    <div class="stats-strip" id="statsStrip">
+      <div class="stat-card" id="statOrders">
+        <div class="stat-icon" style="background:rgba(42,167,161,0.10);color:var(--sc-orders)"><i class="fas fa-clipboard-list"></i></div>
+        <div class="stat-label">Фаол буюртмалар</div>
+        <div class="stat-val">${W.orders.length}</div>
+        <div class="stat-sub">жорий</div>
+      </div>
+      <div class="stat-card" id="statProducts">
+        <div class="stat-icon" style="background:rgba(74,127,193,0.10);color:var(--sc-stock)"><i class="fas fa-boxes"></i></div>
+        <div class="stat-label">Каталогдаги товарлар</div>
+        <div class="stat-val">${W.catalog.products.length}</div>
+        <div class="stat-sub">номенклатура</div>
+      </div>
+      <div class="stat-card" id="statUnits">
+        <div class="stat-icon" style="background:rgba(123,94,167,0.10);color:var(--sc-history)"><i class="fas fa-ruler"></i></div>
+        <div class="stat-label">Ўлчов бирликлари</div>
+        <div class="stat-val">${W.catalog.units.length}</div>
+        <div class="stat-sub">мавжуд</div>
+      </div>
+    </div>
+
+    <!-- Order select -->
+    <div class="panel" id="orderSelectPanel">
+      <div class="panel-label"><i class="fas fa-clipboard-list"></i>Буюртмани танланг</div>
+      <div class="order-grid" id="orderGrid">
+        ${W.orders.length ? W.orders.map(o=>`
+          <div class="order-card" onclick="selectOrderForIncome(${o.id})" data-oid="${o.id}">
+            <div class="oc-code">${o.order_code||''}</div>
+            <div class="oc-model">${o.model||''}</div>
+            <div class="oc-client">${o.client||''}</div>
+            <div class="oc-foot">
+              <span class="oc-qty">${o.quantity||0} дона</span>
+              <span class="oc-arr"><i class="fas fa-arrow-right"></i></span>
+            </div>
+          </div>`).join('') : `<div class="empty-box" style="grid-column:1/-1"><i class="fas fa-inbox"></i><p>Фаол буюртмалар йўқ</p></div>`}
+      </div>
+    </div>
+
+    <!-- Income form -->
+    <div class="panel" id="incomeBlock" style="display:none">
+      <div class="panel-label"><i class="fas fa-arrow-down"></i>Товар келиши</div>
+      <div id="selectedOrderBadge" style="margin-bottom:16px"></div>
+      <div class="income-form-grid">
+        <div class="f-group" style="position:relative">
+          <label class="f-lbl">Товар номланиши</label>
+          <input type="text" class="f-ctrl" id="incProductInput"
+            placeholder="Танланг ёки янги ном киритинг..."
+            autocomplete="off"
+            oninput="onProductInput(this.value)"
+            onblur="setTimeout(()=>hideDropdown(),180)">
+          <input type="hidden" id="incProductId">
+          <div id="productDropdown" style="
+            display:none;position:absolute;top:100%;left:0;right:0;z-index:999;
+            background:white;border:1.5px solid var(--border);border-radius:12px;
+            box-shadow:0 12px 36px rgba(26,53,64,0.13);margin-top:4px;
+            max-height:220px;overflow-y:auto;"></div>
+          <div id="incProductTag" style="margin-top:6px;display:none">
+            <span style="display:inline-flex;align-items:center;gap:7px;padding:4px 12px;border-radius:50px;background:rgba(42,167,161,0.10);border:1.5px solid rgba(42,167,161,0.2);font-size:0.82rem;font-weight:700;color:var(--c2)">
+              <i class="fas fa-check-circle"></i>
+              <span id="incProductTagName"></span>
+              <i class="fas fa-times" style="cursor:pointer;opacity:0.5" onclick="clearProductSelection()"></i>
+            </span>
+          </div>
+        </div>
+        <div class="f-group">
+          <label class="f-lbl">Миқдор</label>
+          <input type="number" class="f-ctrl" id="incQty" min="0.01" step="0.01" placeholder="0">
+        </div>
+        <div class="f-group">
+          <label class="f-lbl">Ўлчов бирлиги</label>
+          <select class="f-ctrl" id="incUnit">
+            <option value="">— бирлик —</option>
+            ${W.catalog.units.map(u=>`<option value="${u.code}">${u.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-lbl">&nbsp;</label>
+          <button class="btn-p" style="background:var(--sc-orders);box-shadow:0 8px 22px rgba(42,167,161,0.25)" onclick="submitIncome()">
+            <i class="fas fa-plus"></i>Қабул қилиш
+          </button>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <div class="f-group" style="max-width:480px">
+          <label class="f-lbl">Изоҳ</label>
+          <input type="text" class="f-ctrl" id="incComment" placeholder="Ихтиёрий">
+        </div>
+      </div>
+
+      <!-- Recent income for this order -->
+      <div style="margin-top:22px;padding-top:18px;border-top:1.5px solid var(--border)">
+        <div class="panel-label"><i class="fas fa-clock"></i>Буюртма бўйича сўнгги тушумлар</div>
+        <div id="recentIncomeList"><div class="empty-box" style="padding:20px"><i class="fas fa-inbox"></i><p>Маълумот йўқ</p></div></div>
+      </div>
+    </div>
+  `;
+
+  // Animate stat cards
+  setTimeout(()=>{ document.querySelectorAll('.stat-card').forEach((c,i)=>setTimeout(()=>c.classList.add('show'),i*60)); },100);
+  setTimeout(()=>{ $('orderSelectPanel').classList.add('show'); },100);
+  setTimeout(()=>{ const b=$('incomeBlock'); if(b&&b.style.display!=='none') b.classList.add('show'); },200);
+}
+
+function selectOrderForIncome(id) {
+  W.selectedOrder = id;
+  document.querySelectorAll('.order-card').forEach(c=>c.classList.toggle('sel',+c.dataset.oid===id));
+  const o = W.orders.find(x=>x.id===id);
+  const ib = $('incomeBlock');
+  ib.style.display = '';
+  setTimeout(()=>ib.classList.add('show'),10);
+
+  $('selectedOrderBadge').innerHTML = o ? `
+    <div style="display:inline-flex;align-items:center;gap:10px;padding:8px 16px;border-radius:50px;background:rgba(42,167,161,0.09);border:1.5px solid rgba(42,167,161,0.18)">
+      <i class="fas fa-check-circle" style="color:var(--c2)"></i>
+      <span style="font-weight:700;color:var(--c1)">${o.order_code}</span>
+      <span style="color:var(--c4);font-size:0.9rem">${o.model} · ${o.client}</span>
+    </div>` : '';
+
+  loadRecentIncome(id);
+  scrollToEl('incomeBlock');
+}
+
+async function loadRecentIncome(orderId) {
+  const r = await api('GET',`/api/warehouse/txn?order_id=${orderId}&txn_type=income&limit=10`);
+  const list = $('recentIncomeList');
+  if(!r.success || !r.rows || !r.rows.length) {
+    list.innerHTML=`<div class="empty-box" style="padding:20px"><i class="fas fa-inbox"></i><p>Тушумлар ҳали бўлмаган</p></div>`;
+    return;
+  }
+  list.innerHTML = r.rows.map(txn=>renderHistoryItem(txn)).join('');
+}
+
+/* ── PRODUCT COMBO ── */
+function onProductInput(val) {
+  const query = val.trim().toLowerCase();
+  const dd = $('productDropdown');
+  const all = W.catalog.products;
+
+  // Clear selection if user is typing again
+  if($('incProductId').value && $('incProductInput').value !== $('incProductTagName').textContent) {
+    $('incProductId').value = '';
+    $('incProductTag').style.display = 'none';
+  }
+
+  // Hide dropdown if input is empty
+  if(!query) { dd.style.display='none'; return; }
+
+  const filtered = all.filter(p => p.name.toLowerCase().includes(query));
+
+  let html = filtered.map(p => `
+    <div onclick="selectProduct(${p.id}, '${p.name.replace(/'/g,"\\'")}', false)"
+      style="padding:10px 14px;cursor:pointer;font-size:0.93rem;font-weight:500;color:var(--c1);
+             border-bottom:1px solid var(--border);transition:background 0.15s"
+      onmouseenter="this.style.background='rgba(42,167,161,0.07)'"
+      onmouseleave="this.style.background=''">
+      <i class="fas fa-box" style="font-size:12px;opacity:0.4;margin-right:8px"></i>${p.name}
+    </div>`).join('');
+
+  // If query doesn't exactly match any existing — show "Add new" option
+  const exactMatch = all.find(p => p.name.toLowerCase() === query);
+  if(!exactMatch) {
+    html += `
+      <div onclick="selectProduct(null, '${val.trim().replace(/'/g,"\\'")}', true)"
+        style="padding:10px 14px;cursor:pointer;font-size:0.93rem;font-weight:600;
+               color:var(--c2);border-top:1.5px solid rgba(42,167,161,0.15)"
+        onmouseenter="this.style.background='rgba(42,167,161,0.07)'"
+        onmouseleave="this.style.background=''">
+        <i class="fas fa-plus-circle" style="margin-right:8px"></i>Қўшиш «${val.trim()}»
+      </div>`;
+  }
+
+  dd.innerHTML = html;
+  dd.style.display = html ? '' : 'none';
+}
+
+function selectProduct(id, name, isNew) {
+  $('incProductInput').value = name;
+  $('incProductId').value = isNew ? ('new:' + name) : id;
+  $('incProductTagName').textContent = name;
+  $('incProductTag').style.display = '';
+  hideDropdown();
+  if(isNew) {
+    $('incProductTag').querySelector('span').style.background = 'rgba(249,115,22,0.10)';
+    $('incProductTag').querySelector('span').style.borderColor = 'rgba(249,115,22,0.25)';
+    $('incProductTag').querySelector('span').style.color = '#c2410c';
+    $('incProductTag').querySelector('i:first-child').className = 'fas fa-plus-circle';
+  } else {
+    $('incProductTag').querySelector('span').style.background = 'rgba(42,167,161,0.10)';
+    $('incProductTag').querySelector('span').style.borderColor = 'rgba(42,167,161,0.2)';
+    $('incProductTag').querySelector('span').style.color = 'var(--c2)';
+    $('incProductTag').querySelector('i:first-child').className = 'fas fa-check-circle';
+  }
+}
+
+function clearProductSelection() {
+  $('incProductInput').value = '';
+  $('incProductId').value = '';
+  $('incProductTag').style.display = 'none';
+}
+
+function hideDropdown() {
+  const dd=$('productDropdown'); if(dd) dd.style.display='none';
+}
+
+async function submitIncome() {
+  const productVal = $('incProductId').value;
+  const productInput = $('incProductInput').value.trim();
+  const qty = parseFloat($('incQty').value)||0;
+  const unit = $('incUnit').value;
+  const comment = $('incComment').value.trim();
+
+  if(!W.selectedOrder) { toast('Буюртмани танланг','error'); return; }
+  if(!productInput) { toast('Товар номини кўрсатинг','error'); return; }
+  if(qty<=0) { toast('Миқдорни кўрсатинг','error'); return; }
+  if(!unit) { toast('Ўлчов бирлигini tanlanг','error'); return; }
+
+  let productId;
+
+  if(productVal && !productVal.startsWith('new:')) {
+    // Existing product selected from dropdown
+    productId = +productVal;
+  } else {
+    // New product — create it first
+    const name = productVal.startsWith('new:') ? productVal.slice(4) : productInput;
+    const cr = await api('POST','/api/warehouse/products/add',{ name });
+    if(!cr.success) { toast(cr.message||'Товар яратishda xatolik','error'); return; }
+    productId = cr.product.id;
+    // Refresh catalog cache
+    const cat = await api('GET','/api/warehouse/catalog');
+    if(cat.success) W.catalog = cat;
+    if(!cr.product.created) toast(`«${name}» товари каталогда мавжуд`,'info');
+    else toast(`«${name}» товари каталогga qo'shildi`,'info',2000);
+  }
+
+  const r = await api('POST','/api/warehouse/income',{
+    order_id: W.selectedOrder,
+    product_id: productId,
+    qty, unit,
+    comment: comment||null,
+  });
+
+  if(r.success) {
+    toast('Товар омборга қабул қилинди','success');
+    clearProductSelection();
+    $('incQty').value='';
+    $('incUnit').value='';
+    $('incComment').value='';
+    await loadRecentIncome(W.selectedOrder);
+  } else {
+    toast(r.message||'Хатолик','error');
+  }
+}
+
+/* ══════════════════════════════════
+   SECTION: STOCK (ОСТАТКИ)
+══════════════════════════════════ */
+async function renderStockSection() {
+  await loadOrders();
+  $('secContent').innerHTML = `
+    <div class="panel show">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="by-order" onclick="switchTab('by-order')">
+          <i class="fas fa-clipboard-list"></i>Буюртма бўйича
+        </button>
+        <button class="tab-btn" data-tab="all" onclick="switchTab('all')">
+          <i class="fas fa-globe"></i>Барча товарлар
+        </button>
+      </div>
+
+      <!-- BY ORDER -->
+      <div id="tabByOrder">
+        <div class="panel-label"><i class="fas fa-clipboard-list"></i>Буюртмани танланг</div>
+        <div class="order-grid" style="margin-bottom:22px">
+          ${W.orders.map(o=>`
+            <div class="order-card" onclick="loadStockByOrder(${o.id})" data-oid="${o.id}">
+              <div class="oc-code">${o.order_code||''}</div>
+              <div class="oc-model">${o.model||''}</div>
+              <div class="oc-client">${o.client||''}</div>
+              <div class="oc-foot">
+                <span class="oc-qty">${o.quantity||0} дона</span>
+                <span class="oc-arr"><i class="fas fa-search"></i></span>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div id="stockByOrderResult"></div>
+      </div>
+
+      <!-- ALL -->
+      <div id="tabAll" style="display:none">
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Товар номи бўйича қидириш..." oninput="filterAllStock(this.value)" id="stockSearch">
+        </div>
+        <div id="allStockResult">
+          <div class="loader"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  $('tabByOrder').style.display = tab==='by-order' ? '' : 'none';
+  $('tabAll').style.display      = tab==='all'      ? '' : 'none';
+  if(tab==='all') loadAllStock();
+}
+
+async function loadStockByOrder(orderId) {
+  document.querySelectorAll('[data-oid]').forEach(c=>c.classList.toggle('sel',+c.dataset.oid===orderId));
+  const res = $('stockByOrderResult');
+  res.innerHTML=`<div class="loader"><span></span><span></span><span></span></div>`;
+
+  const r = await api('GET',`/api/warehouse/stock/by-order?order_id=${orderId}`);
+  const o = W.orders.find(x=>x.id===orderId);
+
+  if(!r.success || !r.rows || !r.rows.length) {
+    res.innerHTML=`<div class="empty-box"><i class="fas fa-box-open"></i><p>«<b>${o?.order_code||'#'+orderId}</b></p></div>`;
+    return;
+  }
+
+  // Загружаем брак по этому заказу отдельно
+  const rScrap = await api('GET',`/api/warehouse/stock/by-order?order_id=${orderId}&location=SCRAP`);
+  const scrapRows = (rScrap.success && rScrap.rows) ? rScrap.rows.filter(x=>x.qty>0) : [];
+
+  res.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+      <span style="font-weight:700;color:var(--c1)">Буюртма:</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--c2)">${o?.order_code||''}</span>
+      <span style="color:var(--c4)">${o?.model||''}</span>
+      <span style="margin-left:auto;font-size:0.82rem;color:var(--c4)">Позициялар: <b>${r.rows.length}</b>${scrapRows.length?` · Брак: <b style="color:#b91c1c">${scrapRows.length}</b>`:''}</span>
+    </div>
+    <table class="stock-tbl">
+      <thead><tr><th>#</th><th>Номланиш</th><th>Миқдор</th><th>Ўлчов бирлиги</th><th>Жой</th></tr></thead>
+      <tbody>
+        ${r.rows.map((row,i)=>`
+          <tr>
+            <td style="color:var(--c4);font-size:0.82rem">${i+1}</td>
+            <td>
+              <span class="badge badge-mat" style="margin-right:8px">
+                <i class="fas fa-box"></i>
+              </span>
+              ${row.product_name}
+            </td>
+            <td><span class="qty-mono">${fmtQty(row.qty)}</span></td>
+            <td><span class="unit-badge">${row.unit}</span></td>
+            <td><span style="font-size:0.8rem;color:var(--c4)">склад</span></td>
+          </tr>`).join('')}
+        ${scrapRows.map(row=>`
+          <tr style="background:rgba(239,68,68,0.03)">
+            <td><i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:11px"></i></td>
+            <td>
+              <span class="badge badge-scrap" style="margin-right:8px">
+                <i class="fas fa-exclamation-triangle"></i>
+              </span>
+              <span style="color:#b91c1c;font-weight:600">${row.product_name}</span>
+            </td>
+            <td><span class="qty-mono" style="color:#b91c1c">${fmtQty(row.qty)}</span></td>
+            <td><span class="unit-badge" style="background:rgba(239,68,68,0.10);color:#b91c1c">${row.unit}</span></td>
+            <td><span class="badge badge-scrap" style="font-size:0.72rem">Брак</span></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+let _allStockCache = null;
+let _prodStockCache = null;
+
+async function loadAllStock() {
+  const res = $('allStockResult');
+  if(_allStockCache && _prodStockCache) { renderAllStock(_allStockCache, _prodStockCache, ''); return; }
+  res.innerHTML=`<div class="loader"><span></span><span></span><span></span></div>`;
+
+  const [r, rProd] = await Promise.all([
+    api('GET','/api/warehouse/stock/all'),
+    api('GET','/api/warehouse/stock/production'),
+  ]);
+
+  if(!r.success && !rProd.success) {
+    res.innerHTML=`<div class="empty-box"><i class="fas fa-box-open"></i><p>Омбор бўш</p></div>`;
+    return;
+  }
+  _allStockCache = r.rows || [];
+  _prodStockCache = rProd.rows || [];
+  renderAllStock(_allStockCache, _prodStockCache, '');
+}
+
+const LOCATION_LABEL = {
+  CUTTING: 'Кесиш',
+  SEWING:  'Тикиш',
+  PACKING: 'Қадоқлаш',
+};
+
+function renderAllStock(rows, prodRows, search) {
+  const filtered = search ? rows.filter(r=>r.product_name.toLowerCase().includes(search.toLowerCase())) : rows;
+  const res = $('allStockResult');
+
+  // Производственные остатки — группируем по товару
+  const prodMap = {}; // product_name+unit → [{location, order_code, qty}]
+  (prodRows||[]).forEach(r => {
+    const key = r.product_name + '|' + r.unit;
+    if(!prodMap[key]) prodMap[key] = [];
+    prodMap[key].push(r);
+  });
+
+  // Все уникальные товары из производства (которых нет в MAIN)
+  const mainKeys = new Set(rows.map(r => r.product_name + '|' + r.unit));
+  const prodOnly = [];
+  const seen = new Set();
+  (prodRows||[]).forEach(r => {
+    const key = r.product_name + '|' + r.unit;
+    if(!mainKeys.has(key) && !seen.has(key)) { seen.add(key); prodOnly.push(r); }
+  });
+
+  const allItems = [...filtered, ...prodOnly.map(r => ({
+    product_name: r.product_name, unit: r.unit, qty: 0, scrap_qty: 0, orders: [], _prodOnly: true
+  }))];
+
+  if(!allItems.length && !Object.keys(prodMap).length) {
+    res.innerHTML=`<div class="empty-box"><i class="fas fa-search"></i><p>Ҳеч нарса топилмади</p></div>`;
+    return;
+  }
+
+  const totalScrap = filtered.filter(r=>(r.scrap_qty||0)>0).length;
+
+  const tableRows = allItems.map((row, i) => {
+    const key = row.product_name + '|' + row.unit;
+    const inProd = prodMap[key] || [];
+
+    const prodBadges = inProd.map(p =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(91,139,208,0.12);
+        color:#3a6aad;border-radius:8px;padding:2px 8px;font-size:0.75rem;font-weight:600;margin:2px">
+        <i class="fas fa-industry" style="font-size:0.65rem"></i>
+        ${LOCATION_LABEL[p.location]||p.location}: ${fmtQty(p.qty)} ${p.unit}
+        <span style="opacity:0.7;font-weight:400">(${p.order_code||'#'+p.order_id})</span>
+      </span>`
+    ).join('');
+
+    return `
+      <tr>
+        <td style="color:var(--c4);font-size:0.82rem">${i+1}</td>
+        <td>
+          <span class="badge badge-mat" style="margin-right:8px"><i class="fas fa-box fa-sm"></i></span>
+          ${row.product_name}
+          ${prodBadges ? `<div style="margin-top:5px">${prodBadges}</div>` : ''}
+        </td>
+        <td><span class="qty-mono">${row._prodOnly ? '—' : fmtQty(row.qty)}</span></td>
+        <td><span class="unit-badge">${row.unit}</span></td>
+        <td class="orders-cell">${renderOrderTags(row.orders)}</td>
+      </tr>
+      ${(row.scrap_qty && row.scrap_qty > 0) ? `
+      <tr style="background:rgba(239,68,68,0.04)">
+        <td style="border-left:3px solid #ef4444"></td>
+        <td style="padding-left:32px">
+          <span class="badge badge-scrap" style="margin-right:8px"><i class="fas fa-exclamation-triangle fa-sm"></i></span>
+          <span style="color:#b91c1c;font-weight:600">${row.product_name}</span>
+          <span style="color:#b91c1c;font-size:0.78rem;margin-left:6px;opacity:0.7">— брак</span>
+        </td>
+        <td><span class="qty-mono" style="color:#b91c1c">${fmtQty(row.scrap_qty)}</span></td>
+        <td><span class="unit-badge" style="background:rgba(239,68,68,0.10);color:#b91c1c">${row.unit}</span></td>
+        <td><span style="font-size:0.78rem;color:#b91c1c;font-weight:600"><i class="fas fa-tag" style="margin-right:4px"></i>брак/списание</span></td>
+      </tr>` : ''}`;
+  }).join('');
+
+  res.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <span style="font-size:0.82rem;color:var(--c4)">Позициялар: <b>${allItems.length}</b>${totalScrap ? ` &nbsp;·&nbsp; Брак мавжуд: <b style="color:#b91c1c">${totalScrap}</b>` : ''}</span>
+    </div>
+    <table class="stock-tbl">
+      <thead><tr><th>#</th><th>Номланиш</th><th>Омбор қолдиғи</th><th>Ўлчов</th><th>Буюртмалар</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>`;
+}
+
+function renderOrderTags(orders) {
+  if(!orders || !orders.length) return '<span style="color:var(--c4);font-size:0.8rem">—</span>';
+  if(orders.length <= 3) return orders.map(o=>`<span class="order-tag">${o.order_code}</span>`).join('');
+  const visible = orders.slice(0,2).map(o=>`<span class="order-tag">${o.order_code}</span>`).join('');
+  return visible + `<button class="expand-btn" onclick="expandOrders(this)" data-orders='${JSON.stringify(orders.map(o=>o.order_code))}'>+${orders.length-2} ещё</button>`;
+}
+
+function expandOrders(btn) {
+  const codes = JSON.parse(btn.dataset.orders);
+  const parent = btn.parentElement;
+  parent.innerHTML = codes.map(c=>`<span class="order-tag">${c}</span>`).join('');
+}
+
+function filterAllStock(val) {
+  if(_allStockCache) renderAllStock(_allStockCache, _prodStockCache||[], val);
+}
+
+/* ══════════════════════════════════
+   SECTION: HISTORY
+══════════════════════════════════ */
+async function renderHistorySection() {
+  $('secContent').innerHTML = `
+    <div class="panel show">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+        <div class="f-group" style="flex:1;min-width:160px">
+          <label class="f-lbl">Буюртма</label>
+          <select class="f-ctrl" id="histOrder" onchange="loadHistory()">
+            <option value="">— барча буюртмалар —</option>
+            ${W.orders.length ? '' : ''}
+          </select>
+        </div>
+        <div class="f-group" style="min-width:160px">
+          <label class="f-lbl">Операция тури</label>
+          <select class="f-ctrl" id="histType" onchange="loadHistory()">
+            <option value="">— все —</option>
+            <option value="income">Тушум</option>
+            <option value="issue">Чиқим</option>
+            <option value="transfer">Кўчириш</option>
+            <option value="writeoff">Ҳисобдан чиқариш</option>
+            <option value="adjust">Тузатиш</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-lbl">&nbsp;</label>
+          <button class="btn-g" onclick="loadHistory()"><i class="fas fa-sync-alt"></i>Янгилаш</button>
+        </div>
+      </div>
+      <div id="histResult">
+        <div class="loader"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  `;
+
+  // Populate order select
+  await loadOrders();
+  const sel = $('histOrder');
+  W.orders.forEach(o=>{
+    const opt=document.createElement('option');
+    opt.value=o.id; opt.textContent=`${o.order_code} – ${o.model}`;
+    sel.appendChild(opt);
+  });
+
+  loadHistory();
+}
+
+async function loadHistory() {
+  const orderId = $('histOrder')?.value;
+  const txnType = $('histType')?.value;
+  let url = '/api/warehouse/txn?limit=80';
+  if(orderId) url+=`&order_id=${orderId}`;
+  if(txnType) url+=`&txn_type=${txnType}`;
+
+  const res=$('histResult');
+  res.innerHTML=`<div class="loader"><span></span><span></span><span></span></div>`;
+
+  const r = await api('GET', url);
+  if(!r.success || !r.rows || !r.rows.length) {
+    res.innerHTML=`<div class="empty-box"><i class="fas fa-history"></i><p>Ёзувлар йўқ</p></div>`;
+    return;
+  }
+
+  res.innerHTML = r.rows.map(txn=>renderHistoryItem(txn)).join('');
+}
+
+function renderHistoryItem(txn) {
+  const label = TXN_LABELS[txn.txn_type] || txn.txn_type;
+  const icon  = TXN_ICONS[txn.txn_type]  || 'fa-circle';
+  const color = TXN_COLORS[txn.txn_type] || '#9ca3af';
+  const cls   = 'txn-'+txn.txn_type;
+
+  const linesHtml = (txn.lines||[]).map(l=>`
+    <span class="hi-chip">
+      <i class="fas fa-box" style="font-size:10px;opacity:0.5"></i>
+      ${l.product_name||'Товар'} — <b>${fmtQty(l.qty)} ${l.unit}</b>
+    </span>`).join('');
+
+  const routeHtml = (txn.from_location||txn.to_location) ? `
+    <span style="font-size:0.78rem;color:var(--c4);margin-top:4px;display:block">
+      ${txn.from_location?`<i class="fas fa-map-marker-alt" style="color:${color}"></i> ${txn.from_location}`:''}
+      ${txn.from_location&&txn.to_location?'<i class="fas fa-arrow-right" style="margin:0 4px;opacity:0.4"></i>':''}
+      ${txn.to_location?txn.to_location:''}
+    </span>` : '';
+
+  return `
+    <div class="history-item">
+      <div class="hi-icon" style="background:${color}18">
+        <i class="fas ${icon}" style="color:${color}"></i>
+      </div>
+      <div class="hi-body">
+        <div class="hi-top">
+          <span class="hi-type">${label}</span>
+          ${txn.order_id?`<span class="hi-order">#${txn.order_id}</span>`:''}
+          <span class="hi-time">${fmtDate(txn.created_at)}</span>
+        </div>
+        <div class="hi-lines">${linesHtml}</div>
+        ${routeHtml}
+        ${txn.comment?`<div class="hi-comment">${txn.comment}</div>`:''}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════
+   INIT
+══════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', async()=>{
+  await Promise.all([loadOrders(), loadCatalog()]);
+});
+</script>
+{% endblock %}

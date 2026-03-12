@@ -1,0 +1,2179 @@
+{% extends "base.html" %}
+
+{% block title %}Ишлаб чиқариш{% endblock %}
+{% block brand_subtitle %}Ишлаб чиқариш{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --stage-cutting:  #2AA7A1;
+    --stage-sorting:  #5B8BD0;
+    --stage-sewing:   #9B6DD0;
+    --stage-cleaning: #4BBFA8;
+    --stage-ironing:  #E8954A;
+    --stage-control:  #E84A6E;
+    --stage-packing:  #3AAA5C;
+    --stage-finished: #1E4A54;
+    --panel-bg: rgba(255,255,255,0.7);
+    --border-soft: rgba(30,74,84,0.10);
+  }
+
+  /* ===== LAYOUT ===== */
+  .prod-wrap {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 28px;
+    min-height: 80vh;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .stages-sidebar {
+    background: var(--panel-bg);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--border-soft);
+    border-radius: 22px;
+    padding: 24px 16px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+  }
+
+  .sidebar-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    padding: 0 12px;
+    margin-bottom: 6px;
+  }
+
+  .stage-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    transition: var(--t);
+    position: relative;
+    color: var(--text);
+  }
+
+  .stage-btn:hover { background: rgba(30,74,84,0.06); }
+
+  .stage-btn.active {
+    background: var(--stage-color, var(--accent));
+    color: white;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+
+  .stage-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: var(--t);
+  }
+
+  .stage-btn:not(.active) .stage-icon {
+    background: rgba(30,74,84,0.07);
+    color: var(--stage-color, var(--accent));
+  }
+
+  .stage-label { font-size: 1rem; font-weight: 600; }
+  .stage-num {
+    margin-left: auto;
+    font-size: 0.8rem;
+    opacity: 0.55;
+    font-weight: 600;
+  }
+
+  /* ===== MAIN PANEL ===== */
+  .prod-main {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ===== STAGE HEADER ===== */
+  .stage-header {
+    background: var(--panel-bg);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--border-soft);
+    border-radius: 22px;
+    padding: 28px 32px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+
+  .stage-header-icon {
+    width: 64px; height: 64px;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .stage-header-info h2 { font-size: 1.9rem; font-weight: 800; color: var(--deep); }
+  .stage-header-info p  { color: var(--text-light); font-size: 1rem; margin-top: 4px; }
+
+  /* ===== ORDER SELECTOR ===== */
+  .order-select-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    padding: 22px 26px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .order-select-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 14px;
+  }
+
+  .order-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .order-card {
+    border: 2px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: var(--t);
+    background: rgba(255,255,255,0.5);
+  }
+
+  .order-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+  .order-card.selected { border-color: var(--accent); background: rgba(42,167,161,0.07); }
+
+  .order-card-code { font-weight: 800; color: var(--deep); font-size: 1.05rem; }
+  .order-card-model { font-size: 0.9rem; color: var(--text-light); margin-top: 3px; }
+  .order-card-client { font-size: 0.85rem; color: var(--text-light); }
+  .order-card-qty { display: inline-block; margin-top: 8px; padding: 3px 10px; border-radius: 50px; background: rgba(42,167,161,0.12); color: var(--accent); font-size: 0.82rem; font-weight: 700; }
+
+  /* ===== ACTIONS GRID ===== */
+  .actions-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    padding: 24px 26px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+
+  .action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 22px 14px;
+    border-radius: 16px;
+    border: 2px solid var(--border-soft);
+    background: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: var(--t);
+    font-family: inherit;
+    text-align: center;
+  }
+
+  .action-btn:hover {
+    border-color: var(--btn-color, var(--accent));
+    background: rgba(255,255,255,0.9);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+  }
+
+  .action-btn.active-action {
+    border-color: var(--btn-color, var(--accent));
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 0 0 4px rgba(42,167,161,0.12);
+  }
+
+  .action-btn i {
+    font-size: 24px;
+    color: var(--btn-color, var(--accent));
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: rgba(42,167,161,0.09);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .action-btn span { font-size: 0.93rem; font-weight: 600; color: var(--deep); }
+
+  /* ===== FORM PANEL ===== */
+  .form-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    padding: 28px 30px;
+    box-shadow: var(--shadow-soft);
+    display: none;
+  }
+
+  /* Видимость form-panel управляется через JS style.display */
+
+  .form-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--deep);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .form-title i {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    color: white;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 7px; }
+  .form-group label { font-size: 0.85rem; font-weight: 700; color: var(--text-light); letter-spacing: 0.5px; text-transform: uppercase; }
+
+  .form-control {
+    padding: 13px 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-soft);
+    background: rgba(255,255,255,0.7);
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text);
+    transition: var(--t);
+    outline: none;
+  }
+
+  .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,167,161,0.12); }
+
+  select.form-control { cursor: pointer; }
+
+  .qty-row { display: flex; gap: 10px; }
+  .qty-row input { flex: 1; }
+  .qty-row select { width: 110px; }
+
+  /* ===== WIP TABLE ===== */
+  .wip-table-wrap { overflow-x: auto; }
+
+  .wip-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--deep);
+    margin: 20px 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .color-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 14px;
+    border-radius: 50px;
+    background: rgba(30,74,84,0.09);
+    color: var(--deep);
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+
+  .wip-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  .wip-table th {
+    text-align: left;
+    padding: 11px 14px;
+    font-size: 0.82rem;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    border-bottom: 2px solid var(--border-soft);
+    font-weight: 700;
+  }
+
+  .wip-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 0.98rem;
+  }
+
+  .wip-table tr:hover td { background: rgba(42,167,161,0.04); }
+
+  .wip-table input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border-soft);
+    background: rgba(255,255,255,0.7);
+    font-family: inherit;
+    font-size: 0.95rem;
+    text-align: center;
+    outline: none;
+    transition: var(--t);
+  }
+
+  .wip-table input[type="number"]:focus { border-color: var(--accent); }
+
+  /* Grade table */
+  .grade-header { background: rgba(30,74,84,0.04); }
+
+  /* ===== BUTTONS ===== */
+  .btn-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border-radius: 14px;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--t);
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 10px 28px rgba(42,167,161,0.25);
+    margin-top: 8px;
+  }
+
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(42,167,161,0.3); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-secondary-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 24px;
+    border-radius: 14px;
+    border: 2px solid var(--border-soft);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--t);
+    background: rgba(255,255,255,0.7);
+    color: var(--deep);
+    margin-top: 8px;
+    margin-left: 10px;
+  }
+
+  .btn-secondary-submit:hover { border-color: var(--accent); background: white; }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: fixed;
+    bottom: 30px; right: 30px;
+    padding: 16px 24px;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    max-width: 380px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.success { background: #E8F5E9; color: #1B5E20; border-left: 4px solid #2ECC71; }
+  #toast.error   { background: #FFEBEE; color: #7B1FA2; border-left: 4px solid #E74C3C; }
+  #toast.info    { background: #E3F2FD; color: #0D47A1; border-left: 4px solid #2196F3; }
+
+  /* ===== EMPTY / LOADING STATES ===== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-light);
+  }
+
+  .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.3; display: block; }
+  .empty-state p { font-size: 1.1rem; }
+
+  .loading-dots {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .loading-dots span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1.2s infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1.2); opacity: 1; }
+  }
+
+  /* ===== WIP STOCK PREVIEW ===== */
+  .stock-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .stock-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 50px;
+    background: rgba(30,74,84,0.07);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--deep);
+  }
+
+  .stock-chip .chip-qty {
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+  }
+
+  /* ===== VALIDATION ===== */
+  .grade-sum-row td { font-weight: 700; background: rgba(30,74,84,0.04); }
+  .grade-sum-row .mismatch { color: #E74C3C; }
+  .grade-sum-row .match { color: #2ECC71; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .prod-wrap { grid-template-columns: 1fr; }
+    .stages-sidebar { position: static; flex-direction: row; flex-wrap: wrap; }
+    .stage-btn { width: auto; flex: 1; min-width: 120px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .order-cards { grid-template-columns: 1fr; }
+    .actions-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="prod-wrap">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="stages-sidebar">
+    <div class="sidebar-title">Босқичлар</div>
+
+    <button class="stage-btn" style="--stage-color: var(--stage-cutting)"  data-stage="cutting"  onclick="selectStage('cutting')">
+      <div class="stage-icon"><i class="fas fa-cut"></i></div>
+      <span class="stage-label">Кесиш</span>
+      <span class="stage-num">1</span>
+    </button>
+
+    <button class="stage-btn" style="--stage-color: var(--stage-sorting)"  data-stage="sorting"  onclick="selectStage('sorting')">
+      <div class="stage-icon"><i class="fas fa-filter"></i></div>
+      <span class="stage-label">Саралаш</span>
+      <span class="stage-num">2</span>
+    </button>
+
+    <button class="stage-btn" style="--stage-color: var(--stage-sewing)"   data-stage="sewing"   onclick="selectStage('sewing')">
+      <div class="stage-icon"><i class="fas fa-tshirt"></i></div>
+      <span class="stage-label">Тикиш</span>
+      <span class="stage-num">3</span>
+    </button>
+
+    <button class="stage-btn" style="--stage-color: var(--stage-cleaning)" data-stage="cleaning" onclick="selectStage('cleaning')">
+      <div class="stage-icon"><i class="fas fa-broom"></i></div>
+      <span class="stage-label">Тозалаш</span>
+      <span class="stage-num">4</span>
+    </button>
+
+    <button class="stage-btn" style="--stage-color: var(--stage-ironing)"  data-stage="ironing"  onclick="selectStage('ironing')">
+      <div class="stage-icon"><i class="fas fa-thermometer-half"></i></div>
+      <span class="stage-label">Дазмоллаш</span>
+      <span class="stage-num">5</span>
+    </button>
+
+    <button class="stage-btn" style="--stage-color: var(--stage-control)"  data-stage="control"  onclick="selectStage('control')">
+      <div class="stage-icon"><i class="fas fa-check-double"></i></div>
+      <span class="stage-label">Назорат</span>
+      <span class="stage-num">6</span>
+    </button>
+
+    <button class="stage-btn" style="--stage-color: var(--stage-packing)"  data-stage="packing"  onclick="selectStage('packing')">
+      <div class="stage-icon"><i class="fas fa-box"></i></div>
+      <span class="stage-label">Қадоқлаш</span>
+      <span class="stage-num">7</span>
+    </button>
+
+    <button class="stage-btn" style="--stage-color: var(--stage-finished)" data-stage="finished" onclick="selectStage('finished')">
+      <div class="stage-icon"><i class="fas fa-check-circle"></i></div>
+      <span class="stage-label">Тайёр</span>
+      <span class="stage-num">8</span>
+    </button>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="prod-main" id="prodMain">
+
+    <!-- Stage header -->
+    <div class="stage-header" id="stageHeader">
+      <div class="empty-state" style="padding:40px; width:100%">
+        <i class="fas fa-industry" style="font-size:52px; opacity:0.2"></i>
+        <p>Чап менюдан ишлаб чиқариш босқичини танланг</p>
+      </div>
+    </div>
+
+    <!-- Order selector -->
+    <div class="order-select-panel" id="orderPanel" style="display:none">
+      <div class="order-select-label"><i class="fas fa-clipboard-list" style="margin-right:8px"></i>Буюртмани танланг</div>
+      <div class="order-cards" id="orderCards">
+        <div class="empty-state" style="padding:30px"><div class="loading-dots"><span></span><span></span><span></span></div></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-panel" id="actionsPanel" style="display:none">
+      <div class="order-select-label"><i class="fas fa-bolt" style="margin-right:8px"></i>Амалиётлар</div>
+      <div class="actions-grid" id="actionsGrid"></div>
+    </div>
+
+    <!-- Form panel -->
+    <div class="form-panel" id="formPanel">
+      <div class="form-title" id="formTitle"></div>
+      <div id="formContent"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+const S = {
+  stage: null,
+  orderId: null,
+  orderData: null,
+  warehouseItems: [],
+  action: null,
+  wipStock: [],
+};
+
+/* stage meta */
+const STAGE_META = {
+  cutting:  { label: 'Кесиш',      icon: 'fa-cut',               color: 'var(--stage-cutting)',  desc: 'Матоlar ва материалlarни кесиш' },
+  sorting:  { label: 'Саралаш',   icon: 'fa-filter',            color: 'var(--stage-sorting)',  desc: 'Кесилган буюмlarни саралаш' },
+  sewing:   { label: 'Тикиш',        icon: 'fa-tshirt',            color: 'var(--stage-sewing)',   desc: 'Буюмlarни тикиш' },
+  cleaning: { label: 'Тозалаш',       icon: 'fa-broom',             color: 'var(--stage-cleaning)', desc: 'Тикилган буюмlarни тозалаш' },
+  ironing:  { label: 'Дазмоллаш',       icon: 'fa-thermometer-half',  color: 'var(--stage-ironing)',  desc: 'Буюмlarни дазмоллаш' },
+  control:  { label: 'Назорат',     icon: 'fa-check-double',      color: 'var(--stage-control)',  desc: 'Сифат назорати' },
+  packing:  { label: 'Қадоқлаш',     icon: 'fa-box',               color: 'var(--stage-packing)',  desc: 'Буюмlarни қадоқлаш' },
+  finished: { label: 'Тайёр',       icon: 'fa-check-circle',      color: 'var(--stage-finished)', desc: 'Тайёр маҳсулот' },
+};
+
+const STAGE_NEXT = { cutting:'sorting', sorting:'sewing', sewing:'cleaning', cleaning:'ironing', ironing:'control', control:'packing', packing:'finished' };
+const STAGE_PREV = Object.fromEntries(Object.entries(STAGE_NEXT).map(([k,v])=>[v,k]));
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function toast(msg, type='info', dur=3500){
+  const t = document.getElementById('toast');
+  const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
+  t.innerHTML = `<i class="fas ${icons[type]||'fa-info-circle'}"></i> ${msg}`;
+  t.className = `show ${type}`;
+  setTimeout(() => t.className = '', dur);
+}
+
+/* ============================================================
+   API helpers
+   ============================================================ */
+async function api(method, url, body){
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+/* ============================================================
+   LOAD DATA
+   ============================================================ */
+async function loadOrders(){
+  // Қоида: ҳар этап ФАҚАТ ўз WIP'ида буюмлари бор буюртмаларni кўрсатади.
+  // Истисно: КЕСИШ — барча активли (WIP ҳали йўқ), ТАЙЁР — packing'дан ҳам.
+  let url = '/api/orders/options?status=active';
+  if(S.stage === 'cutting'){
+    // Барча активли буюртмалар
+  } else if(S.stage === 'finished'){
+    // finished ёки packing'да WIP бор буюртмалар
+    url += `&wip_stage=finished&prev_wip_stage=packing`;
+  } else if(S.stage === 'packing'){
+    // ҚАДОҚЛАШ: grade-to-packing буюмlarni packing'га ўтказади — фақат packing'дан
+    url += `&wip_stage=packing`;
+  } else {
+    // Ушбу этапда ЁКИ олдинги этапда WIP бор буюртмалар
+    const prevStage = STAGE_PREV[S.stage];
+    url += `&wip_stage=${S.stage}&prev_wip_stage=${prevStage}`;
+  }
+  const r = await api('GET', url);
+  return r.success ? r.orders : [];
+}
+
+async function loadWipStock(orderId, stageKey){
+  const r = await api('GET', `/api/wip/${orderId}/${stageKey}`);
+  return r.success ? r.rows : [];
+}
+
+async function loadWarehouse(orderId){
+  // stock/all doesn't include product_id, so we combine catalog + stock
+  const [rStock, rCat] = await Promise.all([
+    api('GET', `/api/warehouse/stock/all`),
+    api('GET', `/api/warehouse/catalog`),
+  ]);
+  if(!rStock.success) return [];
+
+  // Build name→id map from catalog
+  const nameToId = {};
+  (rCat.products||[]).forEach(p => { nameToId[p.name] = p.id; });
+
+  return (rStock.rows||[])
+    .filter(x => (x.qty||0) > 0)
+    .map(x => ({
+      ...x,
+      product_id: nameToId[x.product_name] || null,
+      unit_key: x.unit,
+    }))
+    .filter(x => x.product_id);  // only items we can identify
+}
+
+/* ============================================================
+   PANEL HELPERS — единая точка управления видимостью панелей
+   ============================================================ */
+function showPanel(id) { document.getElementById(id).style.display = ''; }
+function hidePanel(id) { document.getElementById(id).style.display = 'none'; }
+function showFormPanel() { document.getElementById('formPanel').style.display = 'block'; }
+function hideFormPanel() { document.getElementById('formPanel').style.display = 'none'; }
+
+/* ============================================================
+   SELECT STAGE
+   ============================================================ */
+async function selectStage(stageKey){
+  // Сбрасываем состояние
+  S.stage = stageKey;
+  S.orderId = null;
+  S.orderData = null;
+  S.action = null;
+  S.wipStock = [];
+  S.warehouseItems = [];
+
+  // Sidebar active
+  document.querySelectorAll('.stage-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.stage === stageKey);
+  });
+
+  // Header
+  const m = STAGE_META[stageKey];
+  document.getElementById('stageHeader').innerHTML = `
+    <div class="stage-header-icon" style="background:${m.color}"><i class="fas ${m.icon}"></i></div>
+    <div class="stage-header-info">
+      <h2>${m.label}</h2>
+      <p>${m.desc}</p>
+    </div>
+  `;
+
+  // Сбрасываем панели: orderPanel видна, остальные скрыты
+  showPanel('orderPanel');
+  hidePanel('actionsPanel');
+  hideFormPanel();
+  document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active-action'));
+
+  // Загрузка индикатор
+  document.getElementById('orderCards').innerHTML =
+    `<div class="empty-state" style="padding:20px"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+  try {
+    const orders = await loadOrders();
+    renderOrderCards(orders);
+  } catch(e) {
+    document.getElementById('orderCards').innerHTML =
+      `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Юклашда хатолик</p></div>`;
+  }
+}
+
+/* ============================================================
+   RENDER ORDER CARDS
+   ============================================================ */
+function renderOrderCards(orders){
+  const el = document.getElementById('orderCards');
+  if(!orders.length){
+    el.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Фаол буюртмалар йўқ</p></div>`;
+    return;
+  }
+  el.innerHTML = orders.map(o => `
+    <div class="order-card" onclick="selectOrder(${o.id})" data-oid="${o.id}">
+      <div class="order-card-code">${o.order_code||''}</div>
+      <div class="order-card-model">${o.model||''}</div>
+      <div class="order-card-client">${o.client||''}</div>
+      <span class="order-card-qty"><i class="fas fa-box-open"></i> ${o.quantity||0} шт</span>
+    </div>
+  `).join('');
+}
+
+/* ============================================================
+   SELECT ORDER
+   ============================================================ */
+async function selectOrder(orderId){
+  S.orderId = orderId;
+  S.action = null;
+
+  document.querySelectorAll('.order-card').forEach(c => {
+    c.classList.toggle('selected', +c.dataset.oid === orderId);
+  });
+
+  // Скрываем actionsPanel и formPanel пока грузим
+  hidePanel('actionsPanel');
+  hideFormPanel();
+
+  // Показываем индикатор загрузки в actionsPanel
+  const actGrid = document.getElementById('actionsGrid');
+  actGrid.innerHTML = `<div class="loading-dots" style="grid-column:1/-1;justify-self:center;padding:20px"><span></span><span></span><span></span></div>`;
+  showPanel('actionsPanel');
+
+  try {
+    const [orderRes, wipRows, whRows] = await Promise.all([
+      api('GET', `/api/orders/${orderId}`),
+      loadWipStock(orderId, S.stage),
+      loadWarehouse(orderId),
+    ]);
+
+    if(!orderRes.success){ toast('Буюртмани юклашда хатолик','error'); hidePanel('actionsPanel'); return; }
+    S.orderData = orderRes.order;
+    S.wipStock = wipRows;
+    S.warehouseItems = whRows;
+
+    renderActions();
+  } catch(e) {
+    toast('Буюртмани юклашда хатолик: ' + e.message, 'error');
+    hidePanel('actionsPanel');
+  }
+}
+
+/* ============================================================
+   RENDER ACTIONS per stage
+   ============================================================ */
+function renderActions(){
+  const g = document.getElementById('actionsGrid');
+  const stage = S.stage;
+
+  const btn = (action, icon, label, color='var(--accent)') => `
+    <button class="action-btn" style="--btn-color:${color}" onclick="selectAction('${action}')" data-action="${action}">
+      <i class="fas ${icon}" style="background:${color}15"></i>
+      <span>${label}</span>
+    </button>`;
+
+  let html = '';
+
+  const hasWip = S.wipStock.length > 0;
+  const prevStage = STAGE_PREV[stage];
+
+  // Common: warehouse pick for most stages
+  const warehouseBtn = btn('warehouse','fa-warehouse','Омбордан олиш','#5B8BD0');
+
+  if(stage === 'cutting'){
+    html = btn('warehouse',    'fa-warehouse',          'Омбордан олиш',              '#5B8BD0')
+         + btn('scrap',        'fa-exclamation-triangle','Брак',                       '#E84A6E')
+         + btn('binding',      'fa-ribbon',             'Бейка олиш',                 '#9B6DD0')
+         + btn('cut_result',   'fa-cut',                'Кесиб саралашга топшириш',   '#2AA7A1')
+         + btn('remainder',    'fa-undo',               'Қолдиқни омборга қайтариш',  '#E8954A');
+
+  } else if(stage === 'sorting'){
+    html = btn('accept',       'fa-download',           'Кесишдан қабул қилиш',       '#2AA7A1')
+         + warehouseBtn
+         + btn('scrap',        'fa-exclamation-triangle','Брак',                       '#E84A6E')
+         + btn('transfer_next','fa-arrow-right',        'Тикишга топшириш',           '#3AAA5C');
+
+  } else if(stage === 'sewing'){
+    html = btn('accept',       'fa-download',           'Саралашдан қабул қилиш',     '#2AA7A1')
+         + warehouseBtn
+         + btn('binding_spend','fa-ribbon',             'Бейка сарфи',                '#9B6DD0')
+         + btn('binding_rem',  'fa-undo',               'Қолдиқ бейки',               '#E8954A')
+         + btn('scrap',        'fa-exclamation-triangle','Брак',                       '#E84A6E')
+         + btn('transfer_next','fa-arrow-right',        'Тозалашга топшириш',         '#3AAA5C');
+
+  } else if(stage === 'cleaning'){
+    html = btn('accept',       'fa-download',           'Тикишдан қабул қилиш',       '#2AA7A1')
+         + warehouseBtn
+         + btn('scrap',        'fa-exclamation-triangle','Брак',                       '#E84A6E')
+         + btn('transfer_next','fa-arrow-right',        'Дазмоллашга топшириш',       '#3AAA5C');
+
+  } else if(stage === 'ironing'){
+    html = btn('accept',       'fa-download',           'Тозалашдан қабул қилиш',     '#2AA7A1')
+         + warehouseBtn
+         + btn('scrap',        'fa-exclamation-triangle','Брак',                       '#E84A6E')
+         + btn('transfer_next','fa-arrow-right',        'Назоратга топшириш',         '#3AAA5C');
+
+  } else if(stage === 'control'){
+    html = btn('accept',       'fa-download',           'Дазмоллашдан қабул қилиш',   '#2AA7A1')
+         + warehouseBtn
+         + btn('grade',        'fa-star-half-alt',      'Навларга тақсимлаш — Қадоқлашга топшириш', '#E8954A');
+
+  } else if(stage === 'packing'){
+    html = btn('accept',       'fa-download',           'Назоратдан қабул қилиш',     '#2AA7A1')
+         + warehouseBtn
+         + btn('scrap',        'fa-exclamation-triangle','Брак',                       '#E84A6E')
+         + btn('return_wh',    'fa-undo',               'Омборга қайтариш',           '#E8954A')
+         + btn('packing_finish','fa-arrow-right',       'Тайёрга топшириш',           '#3AAA5C');
+
+  } else if(stage === 'finished'){
+    html = btn('view_stock',   'fa-eye',                'Тайёр маҳсулот',             '#1E4A54');
+  }
+
+  g.innerHTML = html;
+}
+
+/* ============================================================
+   SELECT ACTION
+   ============================================================ */
+async function selectAction(action){
+  S.action = action;
+  document.querySelectorAll('.action-btn').forEach(b => {
+    b.classList.toggle('active-action', b.dataset.action === action);
+  });
+
+  const fp = document.getElementById('formPanel');
+  const fc = document.getElementById('formContent');
+  const ft = document.getElementById('formTitle');
+
+  // Показываем панель и ставим индикатор загрузки
+  fp.style.display = 'block';
+  fc.innerHTML = `<div class="empty-state" style="padding:30px"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+  const formMeta = {
+    warehouse:      { icon:'fa-warehouse',          label:'Омбордан товар олиш',           color:'#5B8BD0' },
+    scrap:          { icon:'fa-exclamation-triangle', label:'Брак фиксацияси',              color:'#E84A6E' },
+    remainder:      { icon:'fa-undo',               label:'Қолдиқни омборга қайтариш',     color:'#E8954A' },
+    binding:        { icon:'fa-ribbon',             label:'Бейка',                          color:'#9B6DD0' },
+    cut_result:     { icon:'fa-cut',                label:'Кесилган буюмлар',               color:'#2AA7A1' },
+    accept:         { icon:'fa-download',           label:'Буюмlarни қабул қилиш',          color:'#2AA7A1' },
+    transfer_next:  { icon:'fa-arrow-right',        label:'Кейинги босқичга топшириш',      color:'#3AAA5C' },
+    binding_spend:  { icon:'fa-ribbon',             label:'Бейка сарфи',                    color:'#9B6DD0' },
+    binding_rem:    { icon:'fa-undo',               label:'Қолдиқ бейки',                   color:'#E8954A' },
+    grade:          { icon:'fa-star-half-alt',      label:'Навларга тақсимлаш',             color:'#E8954A' },
+    return_wh:      { icon:'fa-undo',               label:'Товарни омборга қайтариш',       color:'#E8954A' },
+    view_stock:     { icon:'fa-eye',                label:'Тайёр маҳсулот',                 color:'#1E4A54' },
+  };
+
+  const meta = formMeta[action] || { icon:'fa-bolt', label:action, color:'var(--accent)' };
+  ft.innerHTML = `<i class="fas ${meta.icon}" style="background:${meta.color}"></i>${meta.label}`;
+
+  const renderFn = {
+    warehouse:     renderWarehouseForm,
+    scrap:         () => S.stage === 'cutting' ? renderCuttingKgForm('scrap')     : renderWipTableForm('scrap',     true),
+    remainder:     () => S.stage === 'cutting' ? renderCuttingKgForm('remainder') : renderWipTableForm('remainder', false),
+    binding:       renderBindingForm,
+    cut_result:    renderCutResultForm,
+    accept:        renderAcceptForm,
+    transfer_next: renderTransferForm,
+    packing_finish: renderPackingToFinishedForm,
+    binding_spend: renderBindingSpendForm,
+    binding_rem:   renderBindingRemForm,
+    grade:         renderGradeForm,
+    return_wh:     renderReturnWarehouseForm,
+    view_stock:    renderFinishedStock,
+  }[action];
+
+  try {
+    if(renderFn) await renderFn();
+    else fc.innerHTML = `<p style="color:var(--text-light)">Амалиёт ишлаб чиқилмоқда</p>`;
+  } catch(e) {
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Юклашда хатолик: ${e.message}</p></div>`;
+  }
+
+  fp.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+/* ============================================================
+   HELPERS: build color/size table from order items
+   ============================================================ */
+function groupItems(items){
+  // { color: [sizes...] }
+  const map = {};
+  (items||[]).forEach(it => {
+    if(!map[it.color]) map[it.color] = [];
+    if(!map[it.color].includes(it.size)) map[it.color].push(it.size);
+  });
+  return map;
+}
+
+function buildWipMap(wipRows){
+  // { color_size: qty, color_size_grade: qty }
+  const m = {};
+  (wipRows||[]).forEach(r => {
+    const key = `${r.color}|${r.size}${r.grade?'|'+r.grade:''}`;
+    m[key] = (m[key]||0) + (r.qty||0);
+  });
+  return m;
+}
+
+function colorSizeTable(groups, inputPrefix, showWip=false, wipMap={}, extraCols=[], readonly=false){
+  return Object.entries(groups).map(([color, sizes]) => {
+    const rows = sizes.map(size => {
+      const wipQty = wipMap[`${color}|${size}`] || 0;
+      const extraCells = extraCols.map(col => `<td><input type="number" min="0" placeholder="0" name="${inputPrefix}[${color}][${size}][${col}]" style="width:80px"></td>`).join('');
+      return `
+        <tr>
+          <td>${size}</td>
+          ${showWip ? `<td><strong>${wipQty}</strong></td>` : ''}
+          ${readonly
+            ? `<td><strong>${wipQty}</strong></td>`
+            : `<td><input type="number" min="0" placeholder="0" name="${inputPrefix}[${color}][${size}]" ${showWip&&wipQty>0?`max="${wipQty}"`:''}></td>`
+          }
+          ${extraCells}
+        </tr>`;
+    }).join('');
+
+    return `
+      <div class="wip-section-title"><span class="color-badge"><i class="fas fa-circle" style="font-size:0.7rem;margin-right:6px;color:${colorHex(color)}"></i>${color}</span></div>
+      <table class="wip-table">
+        <thead>
+          <tr>
+            <th>Ўлчам</th>
+            ${showWip ? '<th>Мавжуд</th>' : ''}
+            ${!readonly ? '<th>Миқдор</th>' : '<th>Сони</th>'}
+            ${extraCols.map(c => `<th>${c}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }).join('');
+}
+
+function colorHex(name){
+  const map = { 'БЕЛЫЙ':'#ccc','ЧЁРНЫЙ':'#333','КРАСНЫЙ':'#e74c3c','СИНИЙ':'#3498db','ЗЕЛЁНЫЙ':'#2ecc71','ЖЁЛТЫЙ':'#f1c40f','ОРАНЖЕВЫЙ':'#e67e22','СЕРЫЙ':'#95a5a6','РОЗОВЫЙ':'#ff69b4','ГОЛУБОЙ':'#87ceeb' };
+  return map[name.toUpperCase()] || '#aaa';
+}
+
+function getFormValues(prefix){
+  // Returns { color: { size: qty } }
+  const result = {};
+  document.querySelectorAll(`[name^="${prefix}["]`).forEach(inp => {
+    const m = inp.name.match(/\[(.+?)\]\[(.+?)\](?:\[(.+?)\])?/);
+    if(!m) return;
+    const [,color,size,extra] = m;
+    const val = parseFloat(inp.value)||0;
+    if(!result[color]) result[color] = {};
+    if(extra){
+      if(!result[color][size]) result[color][size] = {};
+      result[color][size][extra] = val;
+    } else {
+      result[color][size] = val;
+    }
+  });
+  return result;
+}
+/* ============================================================
+   HELPERS: товары находящиеся в раскрое (CUTTING) для заказа
+   ============================================================ */
+async function loadCuttingItems(orderId){
+  // Загружает материалы которые сейчас НАХОДЯТСЯ В РАСКРОЕ для данного заказа
+  // т.е. были взяты со склада и ещё не израсходованы/возвращены
+  const [rCutting, rCat] = await Promise.all([
+    api('GET', `/api/warehouse/stock/by-order?order_id=${orderId}&location=CUTTING`),
+    api('GET', `/api/warehouse/catalog`),
+  ]);
+
+  const nameToId = {};
+  (rCat.products||[]).forEach(p => { nameToId[p.name] = p.id; });
+
+  const rows = rCutting.success ? (rCutting.rows||[]) : [];
+  return rows
+    .filter(x => (x.qty||0) > 0)
+    .map(x => ({
+      product_id:   nameToId[x.product_name] || null,
+      product_name: x.product_name,
+      qty:          x.qty,
+      unit_key:     x.unit,
+    }))
+    .filter(x => x.product_id);
+}
+
+/* ============================================================
+   HELPERS: все товары доступные на главном складе (MAIN)
+   ============================================================ */
+async function loadMainWarehouse(){
+  const [rStock, rCat] = await Promise.all([
+    api('GET', `/api/warehouse/stock/all`),
+    api('GET', `/api/warehouse/catalog`),
+  ]);
+  if(!rStock.success) return [];
+  const nameToId = {};
+  (rCat.products||[]).forEach(p => { nameToId[p.name] = p.id; });
+  return (rStock.rows||[])
+    .filter(x => (x.qty||0) > 0)
+    .map(x => ({
+      product_id:   nameToId[x.product_name] || null,
+      product_name: x.product_name,
+      qty:          x.qty,
+      unit_key:     x.unit,
+    }))
+    .filter(x => x.product_id);
+}
+
+/* ============================================================
+   HELPER: build product select HTML
+   ============================================================ */
+function buildProductSelect(id, items, onchange=''){
+  if(!items.length) return `<select class="form-control" id="${id}"><option value="">— товар йўқ —</option></select>`;
+  const opts = items.map(it =>
+    `<option value="${it.product_id}" data-unit="${it.unit_key}" data-qty="${it.qty}">${it.product_name} — ${it.qty} ${it.unit_key}</option>`
+  ).join('');
+  return `<select class="form-control" id="${id}" onchange="${onchange}">${opts}</select>`;
+}
+
+function initProductSelect(selectId, hintId){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const opt = sel.options[sel.selectedIndex];
+  if(!opt) return;
+  const unit = opt.dataset.unit || 'kg';
+  const qty  = opt.dataset.qty  || '';
+  const unitSel = document.getElementById(selectId + '_unit');
+  if(unitSel) [...unitSel.options].forEach(o => { o.selected = o.value === unit; });
+  const hint = document.getElementById(hintId);
+  if(hint && qty) hint.textContent = `Мавжуд: ${qty} ${unit}`;
+}
+
+function onProductSelectChange(selectId, hintId){
+  initProductSelect(selectId, hintId);
+}
+
+/* ============================================================
+   FORM: WIP TABLE — брак/остаток для не-раскройных этапов
+   ============================================================ */
+async function renderWipTableForm(type, isScrap){
+  const fc = document.getElementById('formContent');
+  const groups = groupItems(S.orderData?.items);
+  const wipMap = buildWipMap(S.wipStock);
+
+  if(!S.wipStock.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Ишлов бериш учун буюмлар йўқ</p></div>`;
+    return;
+  }
+
+  const label    = isScrap ? 'Брак фиксациялаш' : 'Қолдиқни топшириш';
+  const icon     = isScrap ? 'fa-exclamation-triangle' : 'fa-undo';
+  const hint     = isScrap
+    ? 'Брак буюмлар рўйхати'
+    : 'Қолдиқ буюмлар рўйхати';
+  const btnAction = `submitWipTable('${type}')`;
+
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:16px">
+      <i class="fas fa-info-circle"></i> ${hint}
+    </p>
+    <div class="wip-table-wrap">${colorSizeTable(groups, type, true, wipMap)}</div>
+    <div class="form-group" style="margin:18px 0">
+      <label>Изоҳ</label>
+      <input type="text" class="form-control" id="wipTableComment" placeholder="Ихтиёрий">
+    </div>
+    <button class="btn-submit" onclick="${btnAction}">
+      <i class="fas ${icon}"></i> ${label}
+    </button>
+  `;
+}
+
+async function submitWipTable(type){
+  const vals = getFormValues(type);
+  const lines = [];
+  Object.entries(vals).forEach(([color, sizes]) => {
+    if(typeof sizes === 'object' && !Array.isArray(sizes)){
+      Object.entries(sizes).forEach(([size, qty]) => {
+        if(qty > 0) lines.push({ color, size, qty });
+      });
+    }
+  });
+
+  if(!lines.length){ toast('Камида бир ўлчам миқдорини кўрсатинг', 'error'); return; }
+
+  const comment = document.getElementById('wipTableComment')?.value.trim() || null;
+  const r = await api('POST', '/api/wip/scrap', {
+    order_id: S.orderId,
+    stage_key: S.stage,
+    lines,
+    comment,
+  });
+  if(r.success){ toast('Сақланди ✓', 'success'); await refreshWip(); closeForm(); }
+  else toast(r.message || 'Хатолик', 'error');
+}
+
+/* ============================================================
+   FORM: РАСКРОЙ — 1) Взять товар со склада
+   ============================================================ */
+/* ============================================================
+   FORM: ОМБОРДАН ОЛИШ — товар MAIN→CUTTING
+   ============================================================ */
+async function renderWarehouseForm(){
+  const fc = document.getElementById('formContent');
+  fc.innerHTML = `<div class="empty-state" style="padding:30px"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+  const [items, cuttingItems] = await Promise.all([
+    loadMainWarehouse(),
+    loadCuttingItems(S.orderId),
+  ]);
+  S.warehouseItems = items;
+
+  if(!items.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><p>Омбор бўш</p></div>`;
+    return;
+  }
+
+  // Already-taken hint
+  let takenHtml = '';
+  if(cuttingItems.length){
+    const chips = cuttingItems.map(it =>
+      `<span class="stock-chip"><i class="fas fa-cut" style="font-size:0.75rem;margin-right:4px;color:#5B8BD0"></i>${it.product_name} <span class="chip-qty">${it.qty} ${it.unit_key}</span></span>`
+    ).join('');
+    takenHtml = `
+      <div style="margin-bottom:18px;padding:14px 16px;background:rgba(91,139,208,0.08);border-radius:12px;border-left:3px solid #5B8BD0">
+        <div style="font-size:0.82rem;font-weight:700;color:#5B8BD0;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">
+          <i class="fas fa-info-circle"></i> Раскройда мавжуд (ушбу буюртма учун)
+        </div>
+        <div class="stock-preview">${chips}</div>
+      </div>`;
+  }
+
+  fc.innerHTML = `
+    ${takenHtml}
+    <div class="form-row">
+      <div class="form-group">
+        <label>Қайси товар (омбордан)</label>
+        ${buildProductSelect('wh_product', items, "onProductSelectChange('wh_product','wh_hint')")}
+        <small id="wh_hint" style="color:var(--text-light);margin-top:5px;display:block"></small>
+      </div>
+      <div class="form-group">
+        <label>Миқдор</label>
+        <div class="qty-row">
+          <input type="number" class="form-control" id="wh_qty" min="0.001" step="0.001" placeholder="0.000" data-numpad>
+          <select class="form-control" id="wh_product_unit">
+            <option value="kg">кг</option>
+            <option value="m">м</option>
+            <option value="pcs">шт</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Изоҳ</label>
+      <input type="text" class="form-control" id="wh_comment" placeholder="Ихтиёрий">
+    </div>
+    <button class="btn-submit" onclick="submitWarehouse()">
+      <i class="fas fa-arrow-right"></i> Раскройга бериш
+    </button>
+  `;
+  initProductSelect('wh_product', 'wh_hint');
+}
+
+async function submitWarehouse(){
+  const productSel = document.getElementById('wh_product');
+  const productId  = parseInt(productSel?.value);
+  const qty        = parseFloat(document.getElementById('wh_qty')?.value) || 0;
+  const unit       = document.getElementById('wh_product_unit')?.value || 'kg';
+  const comment    = document.getElementById('wh_comment')?.value.trim() || null;
+
+  if(!productId){ toast('Товарни танланг', 'error'); return; }
+  if(qty <= 0){ toast('Миқдорни кўрсатинг', 'error'); return; }
+
+  const item = S.warehouseItems.find(x => x.product_id === productId);
+  if(item && qty > item.qty + 1e-9){
+    toast(`Омборда фақат ${item.qty} ${item.unit_key} мавжуд`, 'error'); return;
+  }
+
+  // Определяем to_location по текущему этапу
+  const stageToLocation = {
+    cutting:  'CUTTING',
+    sorting:  'CUTTING',  // материал всё равно физически в CUTTING
+    sewing:   'SEWING',
+    cleaning: 'SEWING',
+    ironing:  'SEWING',
+    control:  'SEWING',
+    packing:  'PACKING',
+  };
+  const toLocation = stageToLocation[S.stage] || 'CUTTING';
+
+  const r = await api('POST', '/api/warehouse/txn', {
+    txn_type:      'transfer',
+    order_id:      S.orderId,
+    from_location: 'MAIN',
+    to_location:   toLocation,
+    reason:        `${STAGE_META[S.stage]?.label || S.stage} учун омбордан олиш`,
+    comment:       comment || null,
+    lines: [{ product_id: productId, qty, unit }],
+  });
+
+  if(r.success){
+    toast(`Товар омбордан ${STAGE_META[S.stage]?.label || S.stage}га берилди ✓`, 'success');
+    await refreshWip();
+    closeForm();
+  } else {
+    toast(r.message || 'Хатолик', 'error');
+  }
+}
+
+/* ============================================================
+   FORM: РАСКРОЙ — 2) Брак
+   Товары из раскроя (CUTTING), возвращаются на склад с пометкой «брак»
+   Кол-во может быть 0 (система считает как 0)
+   ============================================================ */
+async function renderCuttingKgForm(type){
+  const fc = document.getElementById('formContent');
+  const isScrap = type === 'scrap';
+
+  fc.innerHTML = `<div class="empty-state" style="padding:30px"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+  // Загружаем материалы находящиеся В РАСКРОЕ для этого заказа
+  const cuttingItems = await loadCuttingItems(S.orderId);
+  S._cuttingItems = cuttingItems;
+
+  if(!cuttingItems.length){
+    fc.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-box-open"></i>
+        <p>Раскройда материал йўқ</p>
+        <p style="font-size:0.85rem;margin-top:8px;color:var(--text-light)">Аввал «Омбордан олиш» орқали материал олинг</p>
+      </div>`;
+    return;
+  }
+
+  const label    = isScrap ? 'Брак фиксациялаш' : 'Омборга қайтариш';
+  const icon     = isScrap ? 'fa-exclamation-triangle' : 'fa-undo';
+  const hintText = isScrap
+    ? 'Брак омборга «брак» белгиси билан қайтарилади'
+    : 'Остаток материал омборга қайтарилади (у изначального места)';
+  const action   = isScrap ? `submitCuttingKg('scrap')` : `submitCuttingKg('remainder')`;
+
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:20px">
+      <i class="fas fa-info-circle"></i> ${hintText}
+    </p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Қайси товар (раскройда)</label>
+        ${buildProductSelect('ckg_product', cuttingItems, "onProductSelectChange('ckg_product','ckg_hint')")}
+        <small id="ckg_hint" style="color:var(--text-light);margin-top:5px;display:block"></small>
+      </div>
+      <div class="form-group">
+        <label>Миқдор <span style="font-weight:400;opacity:.6">(0 бўлса ҳисоб 0 деб олинади)</span></label>
+        <div class="qty-row">
+          <input type="number" class="form-control" id="ckg_qty" min="0" step="0.001" placeholder="0" data-numpad>
+          <select class="form-control" id="ckg_product_unit">
+            <option value="kg">кг</option>
+            <option value="m">м</option>
+            <option value="pcs">шт</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Изоҳ</label>
+      <input type="text" class="form-control" id="ckg_comment" placeholder="Ихтиёрий">
+    </div>
+    <button class="btn-submit" onclick="${action}">
+      <i class="fas ${icon}"></i> ${label}
+    </button>
+  `;
+  initProductSelect('ckg_product', 'ckg_hint');
+}
+
+async function submitCuttingKg(type){
+  const qty     = parseFloat(document.getElementById('ckg_qty')?.value) || 0;
+  const unit    = document.getElementById('ckg_product_unit')?.value || 'kg';
+  const comment = document.getElementById('ckg_comment')?.value.trim() || null;
+
+  const productSel = document.getElementById('ckg_product');
+  const productId  = parseInt(productSel?.value);
+  if(!productId){ toast('Материални танланг', 'error'); return; }
+
+  // qty = 0 — разрешено
+  if(qty === 0){
+    toast(type === 'scrap' ? 'Брак: 0 деб белгиланди' : 'Қолдиқ: 0 деб белгиланди', 'info');
+    closeForm();
+    return;
+  }
+
+  // Проверяем что не больше чем есть в CUTTING для этого заказа
+  const items = S._cuttingItems || [];
+  const item  = items.find(x => x.product_id === productId);
+  if(item && qty > item.qty + 1e-9){
+    toast(`Раскройда фақат ${item.qty} ${item.unit_key} мавжуд`, 'error'); return;
+  }
+
+  if(type === 'scrap'){
+    // Брак: CUTTING → SCRAP (списание с пометкой «брак»)
+    const r = await api('POST', '/api/warehouse/txn', {
+      txn_type:      'writeoff',
+      order_id:      S.orderId,
+      from_location: 'CUTTING',
+      to_location:   'SCRAP',
+      reason:        'Брак — раскрой',
+      comment:       comment || 'Брак',
+      lines: [{ product_id: productId, qty, unit }],
+    });
+    if(r.success){ toast('Брак омборга ёзилди ✓', 'success'); await refreshWip(); closeForm(); }
+    else toast(r.message || 'Хатолик', 'error');
+
+  } else {
+    // Остаток: CUTTING → MAIN (возврат неиспользованного материала)
+    const r = await api('POST', '/api/warehouse/txn', {
+      txn_type:      'transfer',
+      order_id:      S.orderId,
+      from_location: 'CUTTING',
+      to_location:   'MAIN',
+      reason:        'Қолдиқ материал — раскройдан қайтариш',
+      comment:       comment || 'Қолдиқ',
+      lines: [{ product_id: productId, qty, unit }],
+    });
+    if(r.success){ toast('Қолдиқ материал омборга қайтарилди ✓', 'success'); await refreshWip(); closeForm(); }
+    else toast(r.message || 'Хатолик', 'error');
+  }
+}
+
+/* ============================================================
+   FORM: БЕЙКА — берём со склада и отдаём в раскрой
+   ============================================================ */
+async function renderBindingForm(){
+  const fc = document.getElementById('formContent');
+  fc.innerHTML = `<div class="empty-state" style="padding:30px"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+  const items = await loadMainWarehouse();
+  S.warehouseItems = items;
+
+  if(!items.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-ribbon"></i><p>Омборда товар йўқ</p></div>`;
+    return;
+  }
+
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:20px">
+      <i class="fas fa-info-circle"></i> Бейка омбордан олиниб раскройга берилади
+    </p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Материал</label>
+        ${buildProductSelect('binding_product', items, "onProductSelectChange('binding_product','binding_hint')")}
+        <small id="binding_hint" style="color:var(--text-light);margin-top:5px;display:block"></small>
+      </div>
+      <div class="form-group">
+        <label>Миқдор</label>
+        <div class="qty-row">
+          <input type="number" class="form-control" id="binding_qty" min="0.001" step="0.001" placeholder="0.000" data-numpad>
+          <select class="form-control" id="binding_product_unit">
+            <option value="kg">кг</option>
+            <option value="m">м</option>
+            <option value="pcs">шт</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Изоҳ</label>
+      <input type="text" class="form-control" id="binding_comment" placeholder="Ихтиёрий">
+    </div>
+    <button class="btn-submit" onclick="submitBinding()">
+      <i class="fas fa-check"></i> Раскройга бериш
+    </button>
+  `;
+  initProductSelect('binding_product', 'binding_hint');
+}
+
+async function submitBinding(){
+  const productSel = document.getElementById('binding_product');
+  const productId  = parseInt(productSel?.value);
+  const qty        = parseFloat(document.getElementById('binding_qty')?.value) || 0;
+  const unit       = document.getElementById('binding_product_unit')?.value || 'kg';
+  const comment    = document.getElementById('binding_comment')?.value.trim() || null;
+
+  if(!productId){ toast('Материални танланг', 'error'); return; }
+  if(qty <= 0){ toast('Миқдорни кўрсатинг', 'error'); return; }
+
+  const item = S.warehouseItems.find(x => x.product_id === productId);
+  if(item && qty > item.qty){
+    toast(`Омборда фақат ${item.qty} ${item.unit_key} мавжуд`, 'error'); return;
+  }
+
+  // Из MAIN → CUTTING
+  const r = await api('POST', '/api/warehouse/txn', {
+    txn_type:      'transfer',
+    order_id:      S.orderId,
+    from_location: 'MAIN',
+    to_location:   'CUTTING',
+    reason:        'Бейкани раскройга бериш',
+    comment:       comment || null,
+    lines: [{ product_id: productId, qty, unit }],
+  });
+  if(r.success){ toast('Бейка раскройга берилди ✓', 'success'); closeForm(); }
+  else toast(r.message || 'Хатолик', 'error');
+}
+
+/* ============================================================
+   FORM: CUT RESULT (Кесилган буюмлар)
+   ============================================================ */
+async function renderCutResultForm(){
+  const fc = document.getElementById('formContent');
+  const groups = groupItems(S.orderData?.items);
+
+  if(!Object.keys(groups).length){
+    fc.innerHTML = `<div class="empty-state"><p>Буюртмада ранг/ўлчам кўрсатилмаган</p></div>`;
+    return;
+  }
+
+  // Загружаем материалы в CUTTING для этого заказа
+  const cuttingItems = await loadCuttingItems(S.orderId);
+  S._cuttingItems = cuttingItems;
+
+  const fabricSelectHtml = cuttingItems.length ? `
+    <div style="margin-top:20px;padding:16px;background:rgba(91,139,208,0.07);border-radius:12px;border-left:3px solid #5B8BD0">
+      <div style="font-size:0.82rem;font-weight:700;color:#3a6aad;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">
+        <i class="fas fa-tshirt"></i> Ишлатилган мато
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Қайси материал</label>
+          ${buildProductSelect('fabric_product', cuttingItems, "onProductSelectChange('fabric_product','fabric_hint')")}
+          <small id="fabric_hint" style="color:var(--text-light);margin-top:5px;display:block"></small>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Сарф миқдори</label>
+          <div class="qty-row">
+            <input type="number" class="form-control" id="fabric_qty" min="0" step="0.001" placeholder="0.000" data-numpad>
+            <select class="form-control" id="fabric_unit">
+              <option value="kg">кг</option>
+              <option value="m">м</option>
+              <option value="pcs">шт</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>` : '';
+
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:16px">
+      <i class="fas fa-info-circle"></i> Ҳар бир ранг ва ўлчам учун кесилган буюмлар миқдорини тўлдиринг.
+      Сақлагандан сўнг «<b>Саралашга топшириш</b>» тугмаси орқали кейинги босқичга юборинг.
+    </p>
+    <div class="wip-table-wrap" id="cutTableWrap">${colorSizeTable(groups,'cut')}</div>
+    ${fabricSelectHtml}
+    <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn-submit" onclick="submitCutResult('sorting')">
+        <i class="fas fa-arrow-right"></i> Саралашга топшириш
+      </button>
+      <button class="btn-secondary-submit" onclick="submitCutResult('service')">
+        <i class="fas fa-handshake"></i> Хизматга юбориш
+      </button>
+    </div>
+  `;
+  if(cuttingItems.length) initProductSelect('fabric_product', 'fabric_hint');
+}
+
+async function submitCutResult(dest){
+  const vals = getFormValues('cut');
+  const lines = [];
+  Object.entries(vals).forEach(([color,sizes]) => {
+    Object.entries(sizes).forEach(([size,qty]) => {
+      if(qty>0) lines.push({color,size,qty});
+    });
+  });
+
+  if(!lines.length){ toast('Камида бир ўлчам миқдорини кўрсатинг','error'); return; }
+
+  // Ишлатилган мато — списываем из CUTTING
+  const fabricProductId = parseInt(document.getElementById('fabric_product')?.value || '0');
+  const fabricQty       = parseFloat(document.getElementById('fabric_qty')?.value || '0');
+  const fabricUnit      = document.getElementById('fabric_unit')?.value || 'kg';
+
+  if(dest === 'sorting'){
+    // 1. Сохраняем кесилган буюмлар в cutting (буюмlar cutting'да қолади, САРАЛАШ қабул қилади)
+    const r = await api('POST','/api/wip/cutting/create',{
+      order_id: S.orderId,
+      lines: lines.map(l => ({ size: l.size, qty: l.qty, color: l.color })),
+      comment: 'Кесилган буюмлар',
+    });
+    if(!r.success){ toast(r.message||'Хатолик','error'); return; }
+
+    // 2. Если указан расход ткани — списываем из CUTTING
+    if(fabricProductId > 0 && fabricQty > 0){
+      const items = S._cuttingItems || [];
+      const item  = items.find(x => x.product_id === fabricProductId);
+      if(item && fabricQty > item.qty + 1e-9){
+        toast(`Раскройда фақат ${item.qty} ${item.unit_key} мавжуд`, 'error'); return;
+      }
+      const rFabric = await api('POST', '/api/warehouse/txn', {
+        txn_type:      'issue',
+        order_id:      S.orderId,
+        from_location: 'CUTTING',
+        reason:        `Кесишда ишлатилган мато — буюртма #${S.orderId}`,
+        comment:       'Ишлатилган мато',
+        lines: [{ product_id: fabricProductId, qty: fabricQty, unit: fabricUnit }],
+      });
+      if(!rFabric.success){ toast(rFabric.message||'Мато списать хатолик','error'); return; }
+      toast('Кесилган буюмлар сақланди ва мато списань қилинди ✓ — САРАЛАШ «Кесишдан қабул қилиш» орқали қабул қилади','success');
+    } else {
+      toast('Кесилган буюмлар сақланди ✓ — САРАЛАШ бўлими «Кесишдан қабул қилиш» тугмасини босади','success');
+    }
+
+    // Cutting этапини 'completed' деб белгилаймиз — САРАЛАШ кўра олsin
+    await api('POST', `/api/orders/${S.orderId}/stages/cutting`, {
+      status: 'completed',
+      note: 'Саралашга топширилди',
+    });
+
+    await refreshWip();
+    closeForm();
+  } else {
+    toast('Хизматга топшириш учун Хизматлар блокiga ўтинг','info', 5000);
+  }
+}
+
+/* ============================================================
+   FORM: ACCEPT (принять из предыдущего этапа)
+   ============================================================ */
+async function renderAcceptForm(){
+  const fc = document.getElementById('formContent');
+  const prevStage = STAGE_PREV[S.stage];
+
+  if(!prevStage){ fc.innerHTML = `<p>Олдинги босқич йўқ</p>`; return; }
+
+  fc.innerHTML = `<div class="empty-state" style="padding:30px"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+  const groups = groupItems(S.orderData?.items);
+
+  // ҚАДОҚЛАШ: grade-to-packing буюмlarni аллақачон packing'га ўтказган — ўзидан ўқийди
+  if(S.stage === 'packing'){
+    const currWip = await loadWipStock(S.orderId, 'packing');
+    if(!currWip.length){
+      fc.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>«${STAGE_META['control']?.label}»дан буюмлар топширилмаган</p></div>`;
+      return;
+    }
+    const total = currWip.reduce((s,x) => s + x.qty, 0);
+    // Grade бўйича йиғиб кўрсатамиз (1-нав, 1.5-нав, 2-нав)
+    const gradeLabel = {'1':'1-нав','1.5':'1.5-нав','2':'2-нав'};
+    const gradeColor = {'1':'#2ECC71','1.5':'#E8954A','2':'#E84A6E'};
+    const byGrade = {};
+    currWip.forEach(r => {
+      const g = r.grade||'—';
+      if(!byGrade[g]) byGrade[g] = [];
+      byGrade[g].push(r);
+    });
+    const tableHtml = Object.entries(byGrade).map(([grade, rows]) => {
+      const gTotal = rows.reduce((s,r)=>s+r.qty,0);
+      const trows = rows.map(r=>`<tr><td>${r.color}</td><td>${r.size}</td><td><b>${r.qty}</b></td></tr>`).join('');
+      return `
+        <div class="wip-section-title">
+          <span style="color:${gradeColor[grade]||'#aaa'};font-weight:800">${gradeLabel[grade]||grade}</span>
+          <span style="margin-left:auto;font-size:0.85rem;color:var(--text-light)">${gTotal} дона</span>
+        </div>
+        <table class="wip-table">
+          <thead><tr><th>Ранг</th><th>Ўлчам</th><th>Сони</th></tr></thead>
+          <tbody>${trows}</tbody>
+        </table>`;
+    }).join('');
+    fc.innerHTML = `
+      <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:16px">
+        «<b>${STAGE_META['control'].label}</b>»дан жами <b>${total}</b> дона буюм навлар бўйича:
+      </p>
+      <div class="wip-table-wrap">${tableHtml}</div>
+      <button class="btn-submit" onclick="submitAcceptConfirmPacking()"><i class="fas fa-check"></i> Қабул қилиш</button>
+    `;
+    return;
+  }
+
+  // Бошқа этаплар: олдинги этапда буюмлар бор-йўқлигини текширамиз
+  const prevWip = await loadWipStock(S.orderId, prevStage);
+
+  if(!prevWip.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>«${STAGE_META[prevStage]?.label}»дан буюмлар топширилмаган</p></div>`;
+    return;
+  }
+
+  const total = prevWip.reduce((s,x) => s + x.qty, 0);
+  const wipMap = buildWipMap(prevWip);
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:16px">
+      «<b>${STAGE_META[prevStage].label}</b>»дан <b>${total}</b> дона буюм қабул учун тайёр:
+    </p>
+    <div class="wip-table-wrap">${colorSizeTable(groups, 'acc', false, wipMap, [], true)}</div>
+    <button class="btn-submit" onclick="submitAcceptTransfer('${prevStage}')"><i class="fas fa-check"></i> Қабул қилиш</button>
+  `;
+}
+
+// ҚАДОҚЛАШ: буюмlar аллақачон packing'да (grade-to-packing орқали) — фақат статус тасдиқ
+async function submitAcceptConfirmPacking(){
+  const currWip = await loadWipStock(S.orderId, 'packing');
+  if(!currWip.length){ toast('Қабул қилиш учун буюмлар йўқ','error'); return; }
+  const total = currWip.reduce((s,x) => s + x.qty, 0);
+  await api('POST', `/api/orders/${S.orderId}/stages/packing`, { status:'in-progress', note:'Назоратдан қабул қилинди' });
+  toast(`✓ ${total} дона буюм қабул қилинди`,'success');
+  await refreshWip(); closeForm();
+}
+
+// Буюмлар prevStage'да — transfer қиламиз (КЕСИШ → САРАЛАШ схемаси)
+async function submitAcceptTransfer(prevStage){
+  const prevWip = await loadWipStock(S.orderId, prevStage);
+  if(!prevWip.length){ toast('Қабул қилиш учун буюмлар йўқ','error'); return; }
+  const lines = prevWip.map(r => ({ color:r.color, size:r.size, grade:r.grade||null, qty:r.qty }));
+  const total = lines.reduce((s,x) => s + x.qty, 0);
+  const r = await api('POST', '/api/wip/transfer', {
+    order_id: S.orderId,
+    from_stage: prevStage,
+    to_stage: S.stage,
+    lines,
+    comment: `${STAGE_META[prevStage]?.label}дан ${STAGE_META[S.stage]?.label}га қабул`,
+  });
+  if(r.success){ toast(`✓ ${total} дона буюм қабул қилинди`,'success'); await refreshWip(); closeForm(); }
+  else toast(r.message||'Хатолик','error');
+}
+
+/* ============================================================
+   FORM: PACKING → FINISHED (graded items)
+   ============================================================ */
+async function renderPackingToFinishedForm(){
+  const fc = document.getElementById('formContent');
+  const packingWip = await loadWipStock(S.orderId, 'packing');
+  if(!packingWip.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Топшириш учун буюмлар йўқ</p></div>`;
+    return;
+  }
+  const total = packingWip.reduce((s,x) => s + x.qty, 0);
+  const gradeLabel = {'1':'1-нав','1.5':'1.5-нав','2':'2-нав'};
+  const gradeColor = {'1':'#2ECC71','1.5':'#E8954A','2':'#E84A6E'};
+  const byGrade = {};
+  packingWip.forEach(r => {
+    const g = r.grade||'—';
+    if(!byGrade[g]) byGrade[g] = [];
+    byGrade[g].push(r);
+  });
+  const tableHtml = Object.entries(byGrade).map(([grade, rows]) => {
+    const gTotal = rows.reduce((s,r)=>s+r.qty,0);
+    const trows = rows.map(r=>`<tr><td>${r.color}</td><td>${r.size}</td><td><b>${r.qty}</b></td></tr>`).join('');
+    return `
+      <div class="wip-section-title">
+        <span style="color:${gradeColor[grade]||'#aaa'};font-weight:800">${gradeLabel[grade]||grade}</span>
+        <span style="margin-left:auto;font-size:0.85rem;color:var(--text-light)">${gTotal} дона</span>
+      </div>
+      <table class="wip-table">
+        <thead><tr><th>Ранг</th><th>Ўлчам</th><th>Сони</th></tr></thead>
+        <tbody>${trows}</tbody>
+      </table>`;
+  }).join('');
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:16px">
+      Тайёр маҳсулотга топшириш — жами <b>${total}</b> дона:
+    </p>
+    <div class="wip-table-wrap">${tableHtml}</div>
+    <button class="btn-submit" onclick="submitPackingToFinished()"><i class="fas fa-arrow-right"></i> Тайёрга топшириш</button>
+  `;
+}
+
+async function submitPackingToFinished(){
+  const packingWip = await loadWipStock(S.orderId, 'packing');
+  if(!packingWip.length){ toast('Топшириш учун буюмлар йўқ','error'); return; }
+  const lines = packingWip.map(r => ({ color:r.color, size:r.size, grade:r.grade||null, qty:r.qty }));
+  const total = lines.reduce((s,x) => s + x.qty, 0);
+  const r = await api('POST', '/api/wip/transfer', {
+    order_id: S.orderId,
+    from_stage: 'packing',
+    to_stage: 'finished',
+    lines,
+    comment: 'Қадоқлашдан тайёр маҳсулотга топшириш',
+  });
+  if(r.success){
+    await api('POST', `/api/orders/${S.orderId}/stages/packing`,  { status:'completed',   note:'Тайёрга топширилди' });
+    await api('POST', `/api/orders/${S.orderId}/stages/finished`, { status:'in-progress', note:'Тайёр маҳсулот' });
+    toast(`✓ ${total} дона тайёр маҳсулот топширилди`,'success');
+    await refreshWip(); closeForm();
+  } else {
+    toast(r.message||'Хатолик','error');
+  }
+}
+
+/* ============================================================
+   FORM: TRANSFER TO NEXT STAGE
+   ============================================================ */
+async function renderTransferForm(){
+  const fc = document.getElementById('formContent');
+  const nextStage = STAGE_NEXT[S.stage];
+  const groups = groupItems(S.orderData?.items);
+  const wipMap = buildWipMap(S.wipStock);
+
+  if(!S.wipStock.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Топшириш учун буюмлар йўқ</p></div>`;
+    return;
+  }
+
+  // Auto-fill table with wip values (editable)
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:16px">
+      Топшириш «<b>${STAGE_META[nextStage]?.label||nextStage}</b>»га. Миқдор автоматик ҳисобланди (брак инобатга олинган):
+    </p>
+    <div class="wip-table-wrap" id="transferTableWrap">${buildTransferTable(wipMap, groups)}</div>
+    <button class="btn-submit" onclick="submitTransfer()"><i class="fas fa-arrow-right"></i> Топшириш</button>
+  `;
+
+  // auto-fill values
+  S.wipStock.forEach(r => {
+    const inp = document.querySelector(`[name="tr[${r.color}][${r.size}]"]`);
+    if(inp) inp.value = r.qty;
+  });
+}
+
+function buildTransferTable(wipMap, groups){
+  return Object.entries(groups).map(([color, sizes]) => {
+    const rows = sizes.map(size => {
+      const qty = wipMap[`${color}|${size}`]||0;
+      return `<tr>
+        <td>${size}</td>
+        <td><strong>${qty}</strong></td>
+        <td><input type="number" min="0" max="${qty}" placeholder="0" name="tr[${color}][${size}]" value="${qty}"></td>
+      </tr>`;
+    }).join('');
+    return `
+      <div class="wip-section-title"><span class="color-badge"><i class="fas fa-circle" style="font-size:0.7rem;margin-right:6px;color:${colorHex(color)}"></i>${color}</span></div>
+      <table class="wip-table">
+        <thead><tr><th>Ўлчам</th><th>Мавжуд</th><th>Топшириш</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }).join('');
+}
+
+async function submitTransfer(){
+  const nextStage = STAGE_NEXT[S.stage];
+  const vals = getFormValues('tr');
+  const lines = [];
+  Object.entries(vals).forEach(([color,sizes]) => {
+    Object.entries(sizes).forEach(([size,qty]) => {
+      if(qty>0) lines.push({color,size,qty});
+    });
+  });
+
+  if(!lines.length){ toast('Миқдорни кўрсатинг','error'); return; }
+
+  const total = lines.reduce((s,x) => s + x.qty, 0);
+
+  if(S.stage === 'packing'){
+    // ҚАДОҚЛАШ → ТАЙЁР: gradeли buюмlarni barchasini transfer qilamiz
+    const packingWip = await loadWipStock(S.orderId, 'packing');
+    if(!packingWip.length){ toast('Топшириш учун буюмлар йўқ','error'); return; }
+    const gradeLines = packingWip.map(r => ({ color:r.color, size:r.size, grade:r.grade||null, qty:r.qty }));
+    const gradeTotal = gradeLines.reduce((s,x)=>s+x.qty,0);
+    const r = await api('POST', '/api/wip/transfer', {
+      order_id: S.orderId,
+      from_stage: 'packing',
+      to_stage: 'finished',
+      lines: gradeLines,
+      comment: 'Қадоқлашдан тайёр маҳсулотга топшириш',
+    });
+    if(r.success){
+      await api('POST', `/api/orders/${S.orderId}/stages/packing`, { status:'completed', note:'Тайёрга топширилди' });
+      await api('POST', `/api/orders/${S.orderId}/stages/finished`, { status:'in-progress', note:'Тайёр маҳсулот қабул қилинди' });
+      toast(`✓ ${gradeTotal} дона тайёр маҳсулот топширилди`,'success');
+      await refreshWip(); closeForm();
+    } else {
+      toast(r.message||'Хатолик','error');
+    }
+  } else {
+    // Бошқа этаплар: буюмlar S.stage'да ҚОЛАДИ, кейинги этап ўзи accept қилади.
+    // S.stage → 'completed' (топширилди), nextStage → 'in-progress' (кутилмоқда)
+    const r1 = await api('POST', `/api/orders/${S.orderId}/stages/${S.stage}`, {
+      status: 'completed',
+      note: `${STAGE_META[nextStage]?.label}га топширилди`,
+    });
+    await api('POST', `/api/orders/${S.orderId}/stages/${nextStage}`, {
+      status: 'in-progress',
+      note: `${STAGE_META[S.stage]?.label}дан қабул кутилмоқда`,
+    });
+    if(r1.success){
+      toast(`✓ ${total} дона буюм «${STAGE_META[nextStage]?.label}»га топширилди`,'success');
+      await refreshWip(); closeForm();
+    } else {
+      toast(r1.message||'Хатолик','error');
+    }
+  }
+}
+
+/* ============================================================
+   FORM: BINDING SPEND / REM (sewing)
+   ============================================================ */
+async function renderBindingSpendForm(){
+  document.getElementById('formContent').innerHTML = `
+    <div class="form-row">
+      <div class="form-group">
+        <label>Бейка (кесишдан)</label>
+        <select class="form-control"><option>Бейка</option></select>
+      </div>
+      <div class="form-group">
+        <label>Миқдор (кг)</label>
+        <input type="number" class="form-control" id="bsQty" min="0" step="0.01" placeholder="0">
+      </div>
+    </div>
+    <button class="btn-submit" onclick="submitBindingSpend()"><i class="fas fa-check"></i> Сақлаш</button>
+  `;
+}
+
+async function submitBindingSpend(){
+  const qty = parseFloat(document.getElementById('bsQty').value)||0;
+  if(qty<=0){ toast('Миқдорни кўрсатинг','error'); return; }
+  const r = await api('POST','/api/wip/scrap',{
+    order_id:S.orderId, stage_key:'sewing',
+    lines:[{color:'БЕЙКА',size:'—',qty}],
+    comment:'Тикишда бейка сарфи',
+  });
+  if(r.success){ toast('Бейка сарфи сақланди','success'); closeForm(); }
+  else toast(r.message||'Хатолик','error');
+}
+
+async function renderBindingRemForm(){
+  const fc = document.getElementById('formContent');
+  fc.innerHTML = `<div class="empty-state" style="padding:30px"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+  const cuttingItems = await loadCuttingItems(S.orderId);
+  S._cuttingItems = cuttingItems;
+
+  if(!cuttingItems.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><p>Раскройда материал йўқ</p></div>`;
+    return;
+  }
+
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:16px">
+      <i class="fas fa-info-circle"></i> Қолдиқ бейка омборга қайтарилади (MAIN складга)
+    </p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Материал (раскройда)</label>
+        ${buildProductSelect('brm_product', cuttingItems, "onProductSelectChange('brm_product','brm_hint')")}
+        <small id="brm_hint" style="color:var(--text-light);margin-top:5px;display:block"></small>
+      </div>
+      <div class="form-group">
+        <label>Миқдор</label>
+        <div class="qty-row">
+          <input type="number" class="form-control" id="brQty" min="0.001" step="0.001" placeholder="0.000">
+          <select class="form-control" id="brm_product_unit">
+            <option value="kg">кг</option>
+            <option value="m">м</option>
+            <option value="pcs">шт</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Изоҳ</label>
+      <input type="text" class="form-control" id="brm_comment" placeholder="Ихтиёрий">
+    </div>
+    <button class="btn-submit" onclick="submitBindingRem()"><i class="fas fa-undo"></i> Омборга қайтариш</button>
+  `;
+  initProductSelect('brm_product', 'brm_hint');
+}
+
+async function submitBindingRem(){
+  const productSel = document.getElementById('brm_product');
+  const productId  = parseInt(productSel?.value);
+  const qty = parseFloat(document.getElementById('brQty').value)||0;
+  const unit = document.getElementById('brm_product_unit')?.value || 'kg';
+  const comment = document.getElementById('brm_comment')?.value.trim() || null;
+
+  if(!productId){ toast('Материални танланг','error'); return; }
+  if(qty<=0){ toast('Миқдорни кўрсатинг','error'); return; }
+
+  const items = S._cuttingItems || [];
+  const item  = items.find(x => x.product_id === productId);
+  if(item && qty > item.qty + 1e-9){
+    toast(`Раскройда фақат ${item.qty} ${item.unit_key} мавжуд`, 'error'); return;
+  }
+
+  const r = await api('POST','/api/warehouse/txn',{
+    txn_type:      'transfer',
+    order_id:      S.orderId,
+    from_location: 'CUTTING',
+    to_location:   'MAIN',
+    reason:        'Қолдиқ материал омборга қайтариш',
+    comment:       comment || 'Қолдиқ бейка',
+    lines: [{ product_id: productId, qty, unit }],
+  });
+  if(r.success){ toast('Қолдиқ материал омборга қайтарилди ✓','success'); closeForm(); }
+  else toast(r.message||'Хатолик','error');
+}
+
+/* ============================================================
+   FORM: GRADE (Назорат)
+   ============================================================ */
+async function renderGradeForm(){
+  const fc = document.getElementById('formContent');
+  const groups = groupItems(S.orderData?.items);
+  const wipMap = buildWipMap(S.wipStock);
+
+  if(!S.wipStock.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Тақсимлаш учун буюмлар йўқ</p></div>`;
+    return;
+  }
+
+  let tablesHtml = Object.entries(groups).map(([color, sizes]) => {
+    const rows = sizes.map(size => {
+      const total = wipMap[`${color}|${size}`]||0;
+      return `
+        <tr data-color="${color}" data-size="${size}" data-total="${total}">
+          <td>${size}</td>
+          <td><strong>${total}</strong></td>
+          <td><input type="number" min="0" max="${total}" placeholder="0" name="g[${color}][${size}][g1]"    class="grade-inp" oninput="checkGradeSum(this)"></td>
+          <td><input type="number" min="0" max="${total}" placeholder="0" name="g[${color}][${size}][g15]"   class="grade-inp" oninput="checkGradeSum(this)"></td>
+          <td><input type="number" min="0" max="${total}" placeholder="0" name="g[${color}][${size}][g2]"    class="grade-inp" oninput="checkGradeSum(this)"></td>
+          <td class="sum-cell" id="sum_${color}_${size}"><span style="color:var(--text-light)">0</span></td>
+        </tr>`;
+    }).join('');
+
+    return `
+      <div class="wip-section-title"><span class="color-badge"><i class="fas fa-circle" style="font-size:0.7rem;margin-right:6px;color:${colorHex(color)}"></i>${color}</span></div>
+      <table class="wip-table">
+        <thead>
+          <tr class="grade-header">
+            <th>Ўлчам</th><th>Қабул қилинган</th><th>1-нав</th><th>1.5-нав</th><th>2-нав</th><th>Йиғинди</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }).join('');
+
+  fc.innerHTML = `
+    <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:12px">
+      <i class="fas fa-info-circle"></i> <b>Муҳим:</b> барча навлар йиғиндиси қабул қилинган миқдорга аниқ тўғри келиши керак
+    </p>
+    <div class="wip-table-wrap">${tablesHtml}</div>
+    <div class="form-group" style="margin:16px 0">
+      <label>Изоҳ</label>
+      <input type="text" class="form-control" id="gradeComment" placeholder="Ихтиёрий">
+    </div>
+    <button class="btn-submit" id="gradeSubmitBtn" onclick="submitGrade()"><i class="fas fa-check"></i> Тақсимлаш ва қадоқлашга топшириш</button>
+  `;
+}
+
+function checkGradeSum(inp){
+  const row = inp.closest('tr');
+  const total = +row.dataset.total;
+  const color = row.dataset.color;
+  const size  = row.dataset.size;
+  const inputs = row.querySelectorAll('.grade-inp');
+  const sum = Array.from(inputs).reduce((s,i) => s+(parseFloat(i.value)||0), 0);
+  const cell = document.getElementById(`sum_${color}_${size}`);
+  if(cell){
+    const ok = sum === total;
+    cell.innerHTML = `<span class="${ok?'match':'mismatch'}" style="font-weight:700">${sum} / ${total}</span>`;
+  }
+}
+
+async function submitGrade(){
+  const groups = groupItems(S.orderData?.items);
+  const wipMap = buildWipMap(S.wipStock);
+  const lines = [];
+  let valid = true;
+
+  Object.entries(groups).forEach(([color,sizes]) => {
+    sizes.forEach(size => {
+      const total = wipMap[`${color}|${size}`]||0;
+      const g1  = parseFloat(document.querySelector(`[name="g[${color}][${size}][g1]"]`)?.value)||0;
+      const g15 = parseFloat(document.querySelector(`[name="g[${color}][${size}][g15]"]`)?.value)||0;
+      const g2  = parseFloat(document.querySelector(`[name="g[${color}][${size}][g2]"]`)?.value)||0;
+      const sum = g1+g15+g2;
+      if(total>0 && sum !== total){ valid=false; }
+      if(total>0) lines.push({ color, size, total, g1, g15, g2 });
+    });
+  });
+
+  if(!valid){ toast('⚠️ Навлар йиғиндиси қабул қилинган миқдорга тўғри келмайди','error',5000); return; }
+  if(!lines.length){ toast('Тақсимлаш учун буюмлар йўқ','error'); return; }
+
+  const comment = document.getElementById('gradeComment').value.trim() || null;
+
+  const r = await api('POST','/api/wip/control/grade-to-packing',{ order_id:S.orderId, lines, comment });
+  if(r.success){
+    // control → completed, packing → in-progress
+    await api('POST', `/api/orders/${S.orderId}/stages/control`, { status:'completed', note:'Навларга тақсимланди, қадоқлашга топширилди' });
+    await api('POST', `/api/orders/${S.orderId}/stages/packing`, { status:'in-progress', note:'Назоратдан қабул кутилмоқда' });
+    toast('✓ Навларга тақсимланди ва қадоқлашга топширilди','success');
+    await refreshWip(); closeForm();
+  }
+  else toast(r.message||'Хатолик','error');
+}
+
+/* ============================================================
+   FORM: RETURN TO WAREHOUSE (packing)
+   ============================================================ */
+async function renderReturnWarehouseForm(){
+  const fc = document.getElementById('formContent');
+  const items = S.warehouseItems;
+
+  fc.innerHTML = `
+    <div class="form-row">
+      <div class="form-group">
+        <label>Товар</label>
+        <select class="form-control" id="rwProduct">
+          ${items.map(it=>`<option value="${it.product_id}">${it.product_name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Миқдор</label>
+        <div class="qty-row">
+          <input type="number" class="form-control" id="rwQty" min="0" step="0.01" placeholder="0">
+          <select class="form-control" id="rwUnit">
+            <option value="kg">кг</option>
+            <option value="m">м</option>
+            <option value="pcs">шт</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <button class="btn-submit" onclick="submitReturnWarehouse()"><i class="fas fa-undo"></i> Омборга қайтариш</button>
+  `;
+}
+
+async function submitReturnWarehouse(){
+  const productId = +document.getElementById('rwProduct').value;
+  const qty = parseFloat(document.getElementById('rwQty').value)||0;
+  const unit = document.getElementById('rwUnit').value;
+  if(!productId||qty<=0){ toast('Барча майдонlarни тўлдиринг','error'); return; }
+
+  const r = await api('POST','/api/warehouse/txn',{
+    txn_type:'return',
+    order_id: S.orderId,
+    from_location:'PACKING',
+    to_location:'MAIN',
+    reason:'Қадоқлашдан қайтариш',
+    lines:[{product_id:productId, qty, unit}],
+  });
+  if(r.success){ toast('Товар омборга қайтарилди','success'); closeForm(); }
+  else toast(r.message||'Хатолик','error');
+}
+
+/* ============================================================
+   FORM: FINISHED STOCK VIEW
+   ============================================================ */
+async function renderFinishedStock(){
+  const fc = document.getElementById('formContent');
+  // finished этапида буюмлар: packing'дан transfer_next бўлган (packing'да)
+  // ёки wip_grade_to_packing орқали finished'га ўтган
+  let rows = await loadWipStock(S.orderId, 'finished');
+  if(!rows.length){
+    // finished'да йўқ бўлса packing'дан текширамиз
+    rows = await loadWipStock(S.orderId, 'packing');
+  }
+
+  if(!rows.length){
+    fc.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><p>«Тайёр маҳсулот»да ҳали маҳсулот йўқ</p></div>`;
+    return;
+  }
+
+  const byGrade = {};
+  rows.forEach(r => {
+    const g = r.grade || '—';
+    if(!byGrade[g]) byGrade[g] = [];
+    byGrade[g].push(r);
+  });
+
+  const gradeLabel = { '1':'1-нав','1.5':'1.5-нав','2':'2-нав','—':'Навсиз' };
+  const gradeColor = { '1':'#2ECC71','1.5':'#E8954A','2':'#E84A6E','—':'#95a5a6' };
+
+  let html = Object.entries(byGrade).map(([grade, items]) => {
+    const total = items.reduce((s,r)=>s+r.qty,0);
+    const trows = items.map(r=>`<tr><td>${r.color}</td><td>${r.size}</td><td><b>${r.qty}</b></td></tr>`).join('');
+    return `
+      <div class="wip-section-title">
+        <span style="color:${gradeColor[grade]||'#aaa'};font-weight:800">${gradeLabel[grade]||grade}</span>
+        <span class="stock-chip" style="margin-left:auto"><span class="chip-qty">${total} шт</span></span>
+      </div>
+      <table class="wip-table">
+        <thead><tr><th>Ранг</th><th>Ўлчам</th><th>Сони</th></tr></thead>
+        <tbody>${trows}</tbody>
+      </table>`;
+  }).join('');
+
+  fc.innerHTML = `<div class="wip-table-wrap">${html}</div>`;
+}
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+async function refreshWip(){
+  if(!S.orderId || !S.stage) return;
+  const [wipRows, whRows] = await Promise.all([
+    loadWipStock(S.orderId, S.stage),
+    loadWarehouse(S.orderId),
+  ]);
+  S.wipStock = wipRows;
+  S.warehouseItems = whRows;
+}
+
+function closeForm(){
+  document.getElementById('formPanel').style.display = 'none';
+  document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active-action'));
+  S.action = null;
+}
+
+/* Auto-select first stage on load — раскомментируйте если нужно */
+document.addEventListener('DOMContentLoaded', () => {
+  // selectStage('cutting');
+});
+</script>
+{% endblock %}

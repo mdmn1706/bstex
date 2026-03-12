@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+
+{% block title %}Хизмат қўшиш{% endblock %}
+{% block brand_subtitle %}Ташқи хизмат{% endblock %}
+
+{% block nav_items %}
+<a href="/orders" class="nav-btn"><i class="fas fa-arrow-left"></i> Орқага</a>
+<a href="/active-services" class="nav-btn"><i class="fas fa-tasks"></i> Хизматлар</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap');
+  .as-wrap { font-family: 'Sora', sans-serif; max-width: 960px; margin: 0 auto; }
+
+  .as-hero { display: flex; align-items: center; gap: 20px; margin-bottom: 36px; }
+  .as-hero-icon {
+    width: 62px; height: 62px; border-radius: 18px;
+    background: var(--gradient-warm); display: flex; align-items: center;
+    justify-content: center; font-size: 26px; color: white; flex-shrink: 0;
+    box-shadow: 0 12px 28px rgba(212,165,116,.3);
+  }
+  .as-hero h2 { font-size: 1.85rem; font-weight: 800; color: var(--deep); margin-bottom: 4px; }
+  .as-hero p  { color: var(--text-light); font-size: .95rem; }
+
+  .form-panel {
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 24px; padding: 36px;
+    backdrop-filter: blur(20px); box-shadow: var(--shadow-soft); margin-bottom: 22px;
+  }
+  .panel-title {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 1.05rem; font-weight: 800; color: var(--deep);
+    margin-bottom: 26px; padding-bottom: 16px;
+    border-bottom: 1px solid rgba(30,74,84,.08);
+  }
+  .panel-title i {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: rgba(212,165,116,.15);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--warm); font-size: 15px; flex-shrink: 0;
+  }
+
+  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 18px; margin-bottom: 18px; }
+  .fg { display: flex; flex-direction: column; }
+  .fg label { font-size: .82rem; font-weight: 700; color: var(--deep); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .5px; }
+  .fg .req { color: var(--warm); }
+  .fg input, .fg select, .fg textarea {
+    padding: 12px 16px; border-radius: 12px;
+    border: 1.5px solid rgba(30,74,84,.12);
+    background: rgba(255,255,255,.9); font-size: .95rem; color: var(--text);
+    font-family: 'Sora', inherit; transition: border-color .2s, box-shadow .2s;
+  }
+  .fg input:focus, .fg select:focus, .fg textarea:focus {
+    outline: none; border-color: var(--warm);
+    box-shadow: 0 0 0 3px rgba(212,165,116,.15);
+  }
+  .fg .hint { font-size: .8rem; color: var(--text-light); margin-top: 5px; }
+
+  /* Order search */
+  .order-search-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+  .order-search-row .fg { flex: 1; min-width: 200px; }
+
+  /* Pills selector */
+  .pills-box { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .pill-sel {
+    padding: 7px 16px; border-radius: 50px;
+    border: 1.5px solid rgba(30,74,84,.15);
+    background: white; color: var(--deep);
+    font-size: .85rem; font-weight: 700; cursor: pointer;
+    transition: var(--t); user-select: none;
+  }
+  .pill-sel:hover { border-color: var(--accent); background: rgba(42,167,161,.05); }
+  .pill-sel.sel {
+    background: var(--gradient-primary); color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(42,167,161,.25);
+  }
+  .pill-empty { color: var(--text-light); font-style: italic; font-size: .9rem; }
+
+  /* Product table */
+  .tbl-wrap { border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(30,74,84,.08); }
+  .prod-table { width: 100%; border-collapse: collapse; }
+  .prod-table th {
+    background: var(--gradient-warm); color: var(--text);
+    padding: 13px 16px; font-size: .88rem; font-weight: 700; text-align: left;
+  }
+  .prod-table td { padding: 10px 14px; border-bottom: 1px solid rgba(30,74,84,.07); background: rgba(255,255,255,.85); font-size: .92rem; }
+  .prod-table tr:last-child td { border-bottom: none; }
+  .prod-table input { padding: 8px 10px; border-radius: 8px; border: 1.5px solid rgba(30,74,84,.1); font-size: .9rem; text-align: center; }
+  .prod-table input:focus { outline: none; border-color: var(--warm); }
+  .prod-table .qty-in { width: 80px; }
+  .prod-table .price-in { width: 130px; }
+  .empty-row td { text-align: center; padding: 24px; color: var(--text-light); font-style: italic; }
+
+  .gen-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 50px;
+    background: var(--gradient-primary); color: white;
+    border: none; font-weight: 700; font-size: .88rem;
+    cursor: pointer; transition: var(--t);
+    box-shadow: 0 6px 18px rgba(42,167,161,.2);
+  }
+  .gen-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(42,167,161,.3); }
+
+  /* Calc box */
+  .calc-box {
+    background: linear-gradient(135deg, rgba(212,165,116,.07), rgba(232,195,158,.04));
+    border: 1px solid rgba(212,165,116,.18);
+    border-radius: 16px; padding: 20px 24px; margin-top: 18px;
+  }
+  .calc-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(212,165,116,.1); font-size: .92rem; }
+  .calc-row:last-child { border-bottom: none; font-weight: 800; font-size: 1rem; color: var(--deep); }
+  .calc-val { font-weight: 700; color: var(--warm); }
+
+  /* Payment toggle */
+  .pay-toggle { display: flex; gap: 12px; margin-top: 10px; }
+  .pay-opt {
+    flex: 1; padding: 13px; border-radius: 14px;
+    border: 2px solid rgba(30,74,84,.12);
+    text-align: center; cursor: pointer; transition: var(--t);
+    background: white; font-weight: 700; font-size: .9rem; color: var(--deep);
+  }
+  .pay-opt:hover { border-color: var(--accent); }
+  .pay-opt.sel { background: var(--gradient-primary); color: white; border-color: transparent; box-shadow: 0 4px 16px rgba(42,167,161,.2); }
+  .pay-opt i { display: block; font-size: 18px; margin-bottom: 4px; }
+
+  /* Actions */
+  .as-actions {
+    display: flex; justify-content: flex-end; align-items: center;
+    gap: 14px; flex-wrap: wrap;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 20px; padding: 20px 28px;
+    backdrop-filter: blur(20px); box-shadow: var(--shadow-soft);
+  }
+  .btn-cancel-as {
+    padding: 13px 28px; border-radius: 50px;
+    background: transparent; border: 1.5px solid rgba(30,74,84,.15);
+    color: var(--text-light); font-weight: 700; font-size: .9rem; cursor: pointer; transition: var(--t);
+  }
+  .btn-cancel-as:hover { background: rgba(231,76,60,.08); border-color: rgba(231,76,60,.3); color: #d64537; }
+  .btn-save-as {
+    padding: 13px 36px; border-radius: 50px;
+    background: var(--gradient-warm); color: var(--text);
+    border: none; font-weight: 700; font-size: .95rem; cursor: pointer; transition: var(--t);
+    box-shadow: 0 10px 28px rgba(212,165,116,.25);
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn-save-as:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(212,165,116,.35); }
+  .btn-save-as:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  #toastMsg {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--deep); color: white; padding: 14px 28px; border-radius: 50px;
+    font-size: .9rem; font-weight: 600; box-shadow: 0 12px 32px rgba(0,0,0,.2);
+    transition: transform .3s, opacity .3s; opacity: 0; z-index: 9999;
+  }
+  #toastMsg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  #toastMsg.error { background: #d64537; }
+  #toastMsg.success { background: #27AE60; }
+
+  @media (max-width:768px) {
+    .form-panel { padding: 18px 16px; border-radius: 16px; }
+    .form-row { grid-template-columns: 1fr; gap: 12px; }
+    .pay-toggle { flex-direction: column; gap: 8px; }
+    .as-hero { gap: 12px; }
+    .as-hero-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 18px; flex-shrink: 0; }
+    .as-hero h2 { font-size: 1.3rem; }
+  }
+  @media (max-width: 480px) {
+    .form-panel { padding: 14px 13px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="as-wrap">
+
+  <div class="as-hero">
+    <div class="as-hero-icon"><i class="fas fa-industry"></i></div>
+    <div>
+      <h2>Ташқи хизмат қўшиш</h2>
+      <p>Фабрикага маҳсулот топшириш учун ёзув яратинг</p>
+    </div>
+  </div>
+
+  <form id="addServiceForm">
+
+    <!-- Буюртмани танлаш -->
+    <div class="form-panel">
+      <div class="panel-title"><i class="fas fa-clipboard-check"></i> Буюртмани танлаш</div>
+      <div class="order-search-row">
+        <div class="fg">
+          <label>Тизимдан буюртма <span class="req">*</span></label>
+          <select id="orderSelect" required>
+            <option value="">Юкланмоқда...</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Артикул бўйича қидириш</label>
+          <input type="text" id="orderSearch" placeholder="TP-2024-...">
+          <div class="hint">Рўйхатни филтрлайди</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Фабрика -->
+    <div class="form-panel">
+      <div class="panel-title"><i class="fas fa-building"></i> Ижрочи фабрика</div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Рўйхатдан танланг</label>
+          <select id="factorySelect">
+            <option value="">Фабрикани танланг</option>
+            <option value="ТекстильПро (Тошкент ш.)">ТекстильПро (Тошкент ш.)</option>
+            <option value="Тикув фабрикаси №5 (Самарқанд ш.)">Тикув фабрикаси №5 (Самарқанд ш.)</option>
+            <option value='МЧЖ "УзТекстиль" (Бухоро ш.)'>МЧЖ "УзТекстиль" (Бухоро ш.)</option>
+            <option value='ЯТ "АзизТекс" (Наманган ш.)'>ЯТ "АзизТекс" (Наманган ш.)</option>
+            <option value='Тикув цехи "Лотос" (Андижон ш.)'>Тикув цехи "Лотос" (Андижон ш.)</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Ёки қўлда киритинг <span class="req">*</span></label>
+          <input type="text" id="factoryManual" placeholder="Фабрика номи" required>
+          <div class="hint">Рўйхатдан танлаганда автоматик тўлдирилади</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Маҳсулотлар -->
+    <div class="form-panel">
+      <div class="panel-title"><i class="fas fa-boxes"></i> Топшириладиган маҳсулотлар</div>
+
+      <div class="fg" style="margin-bottom:18px;">
+        <label>Буюртмадан рангни танланг <span class="req">*</span></label>
+        <div class="pills-box" id="colorsSelector"><span class="pill-empty">Аввал буюртмани танланг</span></div>
+      </div>
+
+      <div class="fg" style="margin-bottom:22px;">
+        <label>Ўлчамlarni танланг</label>
+        <div class="pills-box" id="sizesSelector"><span class="pill-empty">Аввал буюртмани танланг</span></div>
+      </div>
+
+      <button type="button" class="gen-btn" id="generateProductsBtn">
+        <i class="fas fa-table"></i> Жадвал яратиш
+      </button>
+
+      <div class="tbl-wrap" style="margin-top:16px;">
+        <table class="prod-table">
+          <thead>
+            <tr>
+              <th>Ранг</th><th>Ўлчам</th>
+              <th>Миқдор, шт.</th><th>Бирлик нарх (UZS)</th><th>Сумма</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody">
+            <tr class="empty-row"><td colspan="5">Рангlar ва ўлчамlarni танланг, «Жадвал яратиш» ни босинг</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Сана ва нарх -->
+    <div class="form-panel">
+      <div class="panel-title"><i class="fas fa-calendar-alt"></i> Топшириш санаси ва тўлов</div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Топшириш санаси <span class="req">*</span></label>
+          <input type="date" id="transferDate" required>
+        </div>
+        <div class="fg">
+          <label>Стандарт бирлик нарх (UZS)</label>
+          <input type="text" inputmode="decimal" data-numpad data-numpad-fmt id="defaultUnitPrice" placeholder="0" step="100" min="0" value="0">
+          <div class="hint">Янги қаторlar учун ўрнатилади</div>
+        </div>
+      </div>
+
+      <div class="fg" style="margin-bottom:18px;">
+        <label>Тўлов усули <span class="req">*</span></label>
+        <div class="pay-toggle">
+          <div class="pay-opt sel" data-val="cash" id="payCash">
+            <i class="fas fa-money-bill-wave"></i> Нақд пул
+          </div>
+          <div class="pay-opt" data-val="account" id="payAcc">
+            <i class="fas fa-university"></i> Ҳисоб рақам
+          </div>
+        </div>
+        <input type="hidden" id="paymentType" value="cash">
+      </div>
+
+      <div class="fg">
+        <label>Изоҳ</label>
+        <textarea id="comment" rows="3" placeholder="Топшириш ҳақида қўшимча маълумот..."></textarea>
+      </div>
+
+      <div class="calc-box">
+        <div class="calc-row"><span>Умумий миқдор:</span><span class="calc-val" id="calcTotalQty">0 шт.</span></div>
+        <div class="calc-row"><span><strong>Умумий хизмат суммаси:</strong></span><span class="calc-val" id="calcTotalAmount">0 UZS</span></div>
+      </div>
+    </div>
+
+    <div class="as-actions">
+      <button type="button" class="btn-cancel-as" onclick="window.location.href='/orders'">
+        <i class="fas fa-times"></i> Бекор қилиш
+      </button>
+      <button type="submit" class="btn-save-as" id="saveServiceBtn">
+        <i class="fas fa-check"></i> Хизматни сақлаш
+      </button>
+    </div>
+  </form>
+</div>
+
+<div id="toastMsg"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let ordersOptions = [];
+let orderItemsMap = {};
+let selectedColors = new Set();
+let selectedSizes = new Set();
+
+const toast = (msg, type='') => {
+  const el = document.getElementById('toastMsg');
+  el.textContent = msg; el.className = 'show ' + type;
+  setTimeout(() => el.className = '', 3200);
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('transferDate').value = new Date().toISOString().split('T')[0];
+
+  document.getElementById('factorySelect').addEventListener('change', function() {
+    if (this.value) document.getElementById('factoryManual').value = this.value;
+  });
+  document.getElementById('orderSearch').addEventListener('input', function() {
+    renderOrdersSelect(this.value.toLowerCase().trim());
+  });
+  document.getElementById('orderSelect').addEventListener('change', onOrderChanged);
+  document.getElementById('generateProductsBtn').addEventListener('click', generateProductRows);
+  document.getElementById('addServiceForm').addEventListener('submit', onSubmit);
+
+  // Payment toggle
+  document.querySelectorAll('.pay-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.pay-opt').forEach(p => p.classList.remove('sel'));
+      el.classList.add('sel');
+      document.getElementById('paymentType').value = el.dataset.val;
+    });
+  });
+
+  await loadOrdersOptions();
+  updateCalc();
+});
+
+async function loadOrdersOptions() {
+  const sel = document.getElementById('orderSelect');
+  try {
+    const res = await fetch('/api/orders/options?status=active&limit=500');
+    const data = await res.json();
+    if (!res.ok || !data.success) { sel.innerHTML = '<option value="">Юклашда хатолик</option>'; return; }
+    ordersOptions = data.orders || [];
+    renderOrdersSelect('');
+  } catch(e) { sel.innerHTML = '<option value="">Тармоқ хатолиги</option>'; }
+}
+
+function renderOrdersSelect(term) {
+  const sel = document.getElementById('orderSelect');
+  const filtered = !term ? ordersOptions : ordersOptions.filter(o =>
+    (o.order_code||'').toLowerCase().includes(term) ||
+    (o.model||'').toLowerCase().includes(term) ||
+    (o.client||'').toLowerCase().includes(term)
+  );
+  sel.innerHTML = '<option value="">Буюртмани танланг</option>' + filtered.map(o =>
+    `<option value="${o.id}">${esc(o.order_code)} — ${esc(o.model)} (${esc(o.client)})</option>`
+  ).join('');
+}
+
+async function onOrderChanged() {
+  const orderId = parseInt(document.getElementById('orderSelect').value || '0');
+  resetColorsSizes();
+  if (!orderId) return;
+  if (!orderItemsMap[orderId]) {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`);
+      const data = await res.json();
+      if (res.ok && data.success) orderItemsMap[orderId] = data.order.items || [];
+    } catch(e) { return; }
+  }
+  const items = orderItemsMap[orderId] || [];
+  const colors = [...new Set(items.map(i => i.color).filter(Boolean))];
+  const sizes  = [...new Set(items.map(i => i.size).filter(Boolean))];
+  renderPills('colorsSelector', colors, 'color');
+  renderPills('sizesSelector', sizes, 'size');
+}
+
+function resetColorsSizes() {
+  selectedColors = new Set(); selectedSizes = new Set();
+  document.getElementById('colorsSelector').innerHTML = '<span class="pill-empty">Аввал буюртмани танланг</span>';
+  document.getElementById('sizesSelector').innerHTML = '<span class="pill-empty">Аввал буюртмани танланг</span>';
+  document.getElementById('productsTableBody').innerHTML = '<tr class="empty-row"><td colspan="5">Рангlar ва ўлчамlarni танланг, «Жадвал яратиш» ни босинг</td></tr>';
+  updateCalc();
+}
+
+function renderPills(containerId, values, type) {
+  const cont = document.getElementById(containerId);
+  const set = type === 'color' ? selectedColors : selectedSizes;
+  if (!values.length) { cont.innerHTML = '<span class="pill-empty">—</span>'; return; }
+  cont.innerHTML = values.map(v =>
+    `<div class="pill-sel" data-val="${esc(v)}">${esc(v)}</div>`
+  ).join('');
+  cont.querySelectorAll('.pill-sel').forEach(p => {
+    p.addEventListener('click', () => {
+      const v = p.dataset.val;
+      if (set.has(v)) { set.delete(v); p.classList.remove('sel'); }
+      else            { set.add(v);    p.classList.add('sel'); }
+    });
+  });
+}
+
+function generateProductRows() {
+  if (!selectedColors.size) { toast('Камида биtta рангни танланг', 'error'); return; }
+  if (!selectedSizes.size)  { toast('Камида биtta ўлчамни танланг', 'error'); return; }
+  const tbody = document.getElementById('productsTableBody');
+  tbody.innerHTML = '';
+  const defPrice = parseFloat(document.getElementById('defaultUnitPrice').value) || 0;
+  [...selectedColors].forEach(color => {
+    [...selectedSizes].forEach(size => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${esc(color)}</td><td>${esc(size)}</td>
+        <td><input type="number" min="0" value="0" class="qty-in pqty"></td>
+        <td><input type="number" min="0" value="${defPrice}" class="price-in pprice"></td>
+        <td class="ptotal">0 UZS</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+  document.querySelectorAll('.pqty, .pprice').forEach(i => i.addEventListener('input', updateCalc));
+  updateCalc();
+}
+
+function updateCalc() {
+  let totalQty = 0, totalAmount = 0;
+  document.querySelectorAll('#productsTableBody tr').forEach(row => {
+    if (row.cells.length > 1) {
+      const qty   = parseInt(row.querySelector('.pqty')?.value) || 0;
+      const price = parseFloat(row.querySelector('.pprice')?.value) || 0;
+      const total = qty * price;
+      totalQty += qty; totalAmount += total;
+      const tc = row.querySelector('.ptotal');
+      if (tc) tc.textContent = total.toLocaleString('ru-RU') + ' UZS';
+    }
+  });
+  document.getElementById('calcTotalQty').textContent    = totalQty + ' шт.';
+  document.getElementById('calcTotalAmount').textContent = totalAmount.toLocaleString('ru-RU') + ' UZS';
+}
+
+function collectItems() {
+  return [...document.querySelectorAll('#productsTableBody tr')]
+    .filter(r => r.cells.length > 1)
+    .map(r => ({
+      color: r.cells[0].textContent.trim(),
+      size:  r.cells[1].textContent.trim(),
+      qty:   parseInt(r.querySelector('.pqty')?.value) || 0,
+      unit_price: parseFloat(r.querySelector('.pprice')?.value) || 0
+    }))
+    .filter(i => i.qty > 0);
+}
+
+async function onSubmit(e) {
+  e.preventDefault();
+  const orderId = parseInt(document.getElementById('orderSelect').value || '0');
+  const factoryName = document.getElementById('factoryManual').value.trim();
+  const transferDate = document.getElementById('transferDate').value;
+  const paymentType = document.getElementById('paymentType').value;
+  const comment = document.getElementById('comment').value.trim();
+
+  if (!orderId) { toast('Буюртмани танланг', 'error'); return; }
+  if (!factoryName) { toast('Фабрика номини киритинг', 'error'); return; }
+  const items = collectItems();
+  if (!items.length) { toast('Камида биtta маҳсулот қатори миқдори > 0 бўлиши керак', 'error'); return; }
+
+  const btn = document.getElementById('saveServiceBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сақланмоқда...';
+
+  try {
+    const res = await fetch('/api/services/add', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_id: orderId, factory_name: factoryName,
+        stage_from: '', stage_to: '', transfer_date: transferDate,
+        comment: comment || null, payment_type: paymentType, items
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) { toast(data.message || 'Хатолик юз берди', 'error'); return; }
+    toast('Хизмат муваффақиятли сақланди!', 'success');
+    setTimeout(() => window.location.href = '/active-services', 1200);
+  } catch(err) {
+    toast('Тармоқ хатолиги: ' + err, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check"></i> Хизматни сақлаш';
+  }
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Форматтер суммалар ──
+function setupAmountFmt(inp) {
+  if (!inp || inp.disabled) return;
+  function fmt(v) {
+    const s = String(v).replace(/[\s\u00a0,]/g, '');
+    if (!s || isNaN(parseFloat(s))) return s;
+    const parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+    return parts.join('.');
+  }
+  function applyFmt() {
+    const raw = String(inp.value).replace(/[\s\u00a0,]/g, '');
+    if (!raw || raw === '0') return;
+    inp.dataset.raw = raw;
+    inp.type = 'text';
+    inp.value = fmt(raw);
+  }
+  function clearFmt() {
+    inp.type = 'number';
+    inp.value = inp.dataset.raw || '';
+  }
+  inp.addEventListener('blur',   applyFmt);
+  inp.addEventListener('focus',  clearFmt);
+  inp.addEventListener('change', function() { if (document.activeElement !== inp) applyFmt(); });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  setupAmountFmt(document.getElementById('defaultUnitPrice'));
+  // Для динамически добавляемых .pprice полей в таблице
+  document.getElementById('productsTableBody').addEventListener('focusout', function(e) {
+    if (e.target.classList.contains('pprice')) setupAmountFmt(e.target);
+  });
+});
+</script>
+{% endblock %}

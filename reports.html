@@ -1,0 +1,1172 @@
+{% extends "base.html" %}
+{% block title %}Статистика{% endblock %}
+{% block brand_subtitle %}Аналитика{% endblock %}
+
+{% block nav_items %}
+<a href="/reports" class="nav-btn active"><i class="fas fa-chart-bar"></i> Статистика</a>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── VARIABLES ─────────────────────────────────────── */
+:root {
+  --F:   'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --FM:  'Roboto Mono', 'Courier New', monospace;
+
+  --teal:    #2AA7A1;
+  --deep:    #1E4A54;
+  --green:   #1F9956;
+  --red:     #C23B55;
+  --blue:    #2F6FBA;
+  --violet:  #5E42A6;
+  --amber:   #B56B10;
+  --warm:    #A8632A;
+
+  --bg:   #F4F1EC;
+  --s0:   rgba(255,255,255,.97);
+  --s1:   rgba(255,255,255,.80);
+  --bd:   rgba(20,50,60,.10);
+  --bd2:  rgba(20,50,60,.05);
+
+  --t1:  #0B2530;  /* heading */
+  --t2:  #253545;  /* body */
+  --t3:  #60747F;  /* muted */
+
+  --sh0: 0 1px 3px rgba(10,40,50,.06), 0 2px 6px rgba(10,40,50,.04);
+  --sh1: 0 2px 8px rgba(10,40,50,.07), 0 4px 16px rgba(10,40,50,.05);
+  --sh2: 0 6px 22px rgba(10,40,50,.09), 0 2px 8px rgba(10,40,50,.05);
+  --sh3: 0 14px 44px rgba(10,40,50,.11), 0 4px 12px rgba(10,40,50,.06);
+
+  --r4:4px; --r8:8px; --r12:12px; --r16:16px; --r20:20px;
+  --ease: cubic-bezier(.25,.46,.45,.94);
+  --spr:  cubic-bezier(.34,1.25,.64,1);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+body, .main { font-family:var(--F); color:var(--t2); font-size:16px; line-height:1.6 }
+
+/* ── PAGE WRAPPER ────────────────────────────────── */
+.R { display:flex; flex-direction:column; gap:20px; padding-bottom:48px }
+
+/* ── FILTER BAR ─────────────────────────────────── */
+.fb {
+  background:var(--s0); border:1px solid var(--bd);
+  border-radius:var(--r12); padding:12px 18px;
+  box-shadow:var(--sh0);
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.fb-lbl { font-size:12px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.8px; color:var(--t3); display:flex; align-items:center; gap:5px }
+.fi { height:36px; padding:0 11px; border-radius:var(--r8);
+  border:1px solid rgba(20,50,60,.15); background:rgba(246,242,236,.8);
+  font-family:var(--F); font-size:14px; color:var(--t2);
+  outline:none; transition:.18s }
+.fi:focus { border-color:var(--teal); background:#fff; box-shadow:0 0 0 3px rgba(42,167,161,.1) }
+.fs { font-size:13px; color:var(--t3) }
+.b-go { height:36px; padding:0 18px; border:none; border-radius:var(--r8);
+  background:linear-gradient(135deg,var(--teal),var(--deep)); color:#fff;
+  font-family:var(--F); font-size:14px; font-weight:700;
+  cursor:pointer; display:inline-flex; align-items:center; gap:7px;
+  box-shadow:0 3px 10px rgba(42,167,161,.28); transition:.2s var(--spr) }
+.b-go:hover { transform:translateY(-2px); box-shadow:0 5px 16px rgba(42,167,161,.36) }
+.b-rst { height:36px; padding:0 14px; border-radius:var(--r8);
+  border:1px solid var(--bd); background:0; color:var(--t3);
+  font-family:var(--F); font-size:14px; cursor:pointer; transition:.15s }
+.b-rst:hover { background:rgba(20,50,60,.05); color:var(--t2) }
+.live { margin-left:auto; display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--t3) }
+.ldot { width:7px; height:7px; border-radius:50%; background:var(--green);
+  box-shadow:0 0 0 2px rgba(31,153,86,.2); animation:pls 2.5s ease-in-out infinite }
+@keyframes pls { 50%{box-shadow:0 0 0 5px rgba(31,153,86,.06)} }
+#cnt { font-family:var(--FM); font-size:12px; color:var(--t3) }
+
+/* ── BLOCK GRID ─────────────────────────────────── */
+.BG { display:grid; grid-template-columns:repeat(5,1fr); gap:13px }
+@media(max-width:1100px){.BG{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px) {.BG{grid-template-columns:1fr 1fr}}
+
+.bb {
+  background:var(--s0); border:1.5px solid var(--bd);
+  border-radius:var(--r20); padding:22px 15px 18px;
+  text-align:center; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  position:relative; overflow:hidden;
+  box-shadow:var(--sh1); user-select:none;
+  transition:transform .26s var(--spr), box-shadow .26s var(--ease), border-color .18s;
+}
+.bb:hover { transform:translateY(-5px) scale(1.015); box-shadow:var(--sh3); border-color:var(--BC) }
+.bb.sel  { border-color:var(--BC); box-shadow:0 0 0 3px color-mix(in srgb,var(--BC) 16%,transparent),var(--sh2) }
+/* shimmer */
+.bb::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.28) 50%,transparent 70%); transform:translateX(-100%); transition:transform .5s var(--ease) }
+.bb:hover::after { transform:translateX(100%) }
+
+.bb-ico {
+  width:56px; height:56px; border-radius:15px;
+  background:linear-gradient(140deg,var(--BC) 0%,color-mix(in srgb,var(--BC) 62%,#000) 100%);
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:22px;
+  box-shadow:0 7px 18px rgba(0,0,0,.13);
+  transition:transform .28s var(--spr); z-index:1; position:relative
+}
+.bb:hover .bb-ico { transform:scale(1.1) rotate(-4deg) }
+.bb-name { font-size:15.5px; font-weight:800; color:var(--t1); position:relative; z-index:1 }
+.bb-desc { font-size:12px; color:var(--t3); line-height:1.55; position:relative; z-index:1 }
+.bb-val  { font-family:var(--FM); font-size:22px; font-weight:700; color:var(--BC); position:relative; z-index:1;
+  opacity:0; transform:scale(.82); transition:.28s var(--spr) }
+.bb.rdy .bb-val { opacity:1; transform:scale(1) }
+.bb-tags { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; position:relative; z-index:1 }
+.bbtag { font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px;
+  background:color-mix(in srgb,var(--BC) 10%,white); color:color-mix(in srgb,var(--BC) 65%,#222);
+  opacity:0; transition:.28s .1s }
+.bb.rdy .bbtag { opacity:1 }
+
+/* ── PANEL ──────────────────────────────────────── */
+.PN { display:none; animation:pfade .3s var(--spr) }
+.PN.on { display:block }
+@keyframes pfade { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.pn-nav { display:flex; align-items:center; gap:13px; margin-bottom:18px;
+  padding-bottom:14px; border-bottom:1px solid var(--bd) }
+.b-bk { height:38px; padding:0 16px; border-radius:var(--r8);
+  border:1px solid var(--bd); background:var(--s0); color:var(--t2);
+  font-family:var(--F); font-size:14px; font-weight:600;
+  cursor:pointer; display:inline-flex; align-items:center; gap:7px;
+  box-shadow:var(--sh0); transition:.18s var(--ease) }
+.b-bk:hover { transform:translateX(-3px); box-shadow:var(--sh1); background:#fff }
+.pn-ttl { font-size:21px; font-weight:800; color:var(--t1); display:flex; align-items:center; gap:10px }
+.pn-ico { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px }
+
+/* ── KPI METRICS ────────────────────────────────── */
+.MG { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:12px; margin-bottom:16px }
+.mc {
+  background:var(--s0); border:1px solid var(--bd); border-radius:var(--r12);
+  padding:16px 15px 13px; box-shadow:var(--sh1); position:relative; overflow:hidden;
+  transition:transform .22s var(--spr),box-shadow .22s var(--ease)
+}
+.mc:hover { transform:translateY(-3px); box-shadow:var(--sh2) }
+.mc::before { content:''; position:absolute; top:0; left:0; right:0; height:2.5px; background:var(--C,var(--teal)); border-radius:2.5px 2.5px 0 0 }
+.mc-glo { position:absolute; top:-24px; right:-14px; width:70px; height:70px; border-radius:50%; background:var(--C,var(--teal)); opacity:.05 }
+.mc-lbl { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--t3); margin-bottom:8px; display:flex; align-items:center; gap:5px }
+.mc-lbl i { color:var(--C,var(--teal)); font-size:12px }
+.mc-val { font-family:var(--FM); font-size:30px; font-weight:800; color:var(--t1); line-height:1; margin-bottom:4px }
+.mc-val.s { font-size:20px }
+.mc-sub { font-size:12.5px; color:var(--t3) }
+
+/* ── CARD ───────────────────────────────────────── */
+.card {
+  background:var(--s0); border:1px solid var(--bd); border-radius:var(--r12);
+  padding:18px; box-shadow:var(--sh1); margin-bottom:13px
+}
+.card-h { display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px; padding-bottom:11px; border-bottom:1px solid var(--bd2) }
+.card-hl { display:flex; align-items:center; gap:8px }
+.card-ico { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; color:#fff; flex-shrink:0 }
+.card-ttl { font-size:15px; font-weight:700; color:var(--t1) }
+.card-r { font-size:13px; color:var(--t3); font-family:var(--FM) }
+.GR2  { display:grid; grid-template-columns:1fr 1fr; gap:13px; margin-bottom:13px }
+.GR3  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:13px; margin-bottom:13px }
+.GR12 { display:grid; grid-template-columns:1fr 2fr; gap:13px; margin-bottom:13px }
+.GR21 { display:grid; grid-template-columns:2fr 1fr; gap:13px; margin-bottom:13px }
+@media(max-width:800px){.GR2,.GR3,.GR12,.GR21{grid-template-columns:1fr}}
+
+/* ── TABLE ──────────────────────────────────────── */
+.T { width:100%; border-collapse:collapse; font-size:14px }
+.T th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px;
+  color:var(--t3); text-align:left; padding:0 9px 9px; border-bottom:1px solid var(--bd) }
+.T td { padding:9px; border-bottom:1px solid rgba(20,50,60,.04); vertical-align:top }
+.T tbody tr:last-child td { border-bottom:none }
+.T tbody tr:hover td { background:rgba(246,242,236,.6) }
+.T .nr { text-align:right; font-family:var(--FM); font-weight:700 }
+.T .nc { text-align:center }
+.T tfoot td { font-weight:700; color:var(--t1); padding:9px; border-top:1px solid var(--bd) }
+
+/* ── BADGE ──────────────────────────────────────── */
+.B { display:inline-flex; align-items:center; gap:3px; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700 }
+.Bg { background:rgba(31,153,86,.11); color:#156a3a }
+.Br { background:rgba(194,59,85,.10); color:#962038 }
+.Bt { background:rgba(42,167,161,.11); color:#18706c }
+.Bb { background:rgba(47,111,186,.11); color:#1d4f8a }
+.Ba { background:rgba(181,107,16,.10); color:#8a5008 }
+.Bv { background:rgba(94,66,166,.10); color:#3d2282 }
+.Bm { background:rgba(80,100,115,.09); color:#3a5060 }
+.Bw { background:rgba(168,99,42,.10); color:#7a4218 }
+.sts-active    { background:rgba(31,153,86,.11);  color:#156a3a }
+.sts-done      { background:rgba(42,167,161,.11); color:#18706c }
+.sts-cancelled { background:rgba(194,59,85,.10);  color:#962038 }
+.txb { display:inline-flex; align-items:center; gap:3px; font-size:12.5px; font-weight:700; padding:3px 10px; border-radius:20px }
+.tx-create  { background:rgba(31,153,86,.1);   color:#156a3a }
+.tx-transfer{ background:rgba(42,167,161,.1);  color:#18706c }
+.tx-grade   { background:rgba(94,66,166,.1);   color:#3d2282 }
+.tx-scrap   { background:rgba(194,59,85,.1);   color:#962038 }
+.tx-income  { background:rgba(47,111,186,.1);  color:#1d4f8a }
+.tx-issue   { background:rgba(181,107,16,.1);  color:#8a5008 }
+.tx-writeoff{ background:rgba(194,59,85,.1);   color:#962038 }
+.tx-adjust  { background:rgba(80,100,115,.1);  color:#3a5060 }
+
+/* ── PIPELINE ───────────────────────────────────── */
+.PL { display:flex; flex-direction:column; gap:7px }
+.pl-r { display:flex; align-items:center; gap:10px; padding:9px 12px;
+  border-radius:var(--r8); background:rgba(246,242,236,.55);
+  border:1px solid rgba(20,50,60,.05); transition:.15s }
+.pl-r:hover { background:rgba(246,242,236,.9) }
+.pl-r.scr   { background:rgba(194,59,85,.05); border-color:rgba(194,59,85,.12) }
+.pl-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0 }
+.pl-nm  { flex:1; font-size:14.5px; font-weight:500; color:var(--t2) }
+.pl-bw  { width:115px; height:4.5px; background:rgba(20,50,60,.08); border-radius:3px; flex-shrink:0 }
+.pl-bf  { height:100%; border-radius:3px; transition:width .65s var(--ease) }
+.pl-pct { font-size:12.5px; color:var(--t3); min-width:38px; text-align:right }
+.pl-qty { font-family:var(--FM); font-size:17px; font-weight:700; color:var(--t1); min-width:52px; text-align:right }
+
+/* ── DONUT ──────────────────────────────────────── */
+.dw { display:flex; align-items:center; gap:18px }
+.ds { width:96px; height:96px; flex-shrink:0 }
+.d-bg { fill:none; stroke:rgba(20,50,60,.08); stroke-width:9 }
+.d-fg { fill:none; stroke-width:9; stroke-linecap:round;
+  transform-origin:center; transform:rotate(-90deg); transition:stroke-dasharray 1.1s var(--ease) }
+.d-t  { font-family:var(--FM); font-size:17px; font-weight:700; fill:var(--t1); text-anchor:middle; dominant-baseline:central }
+.d-s  { font-size:10.5px; fill:var(--t3); text-anchor:middle; dominant-baseline:central }
+.lg { display:flex; flex-direction:column; gap:7px; flex:1 }
+.lg-r { display:flex; align-items:center; gap:7px }
+.lg-d { width:8px; height:8px; border-radius:3px; flex-shrink:0 }
+.lg-n { font-size:14px; color:var(--t2); flex:1 }
+.lg-v { font-family:var(--FM); font-size:15px; font-weight:700; color:var(--t1) }
+
+/* ── BAR CHART ──────────────────────────────────── */
+.BC { display:flex; gap:5px; align-items:flex-end; height:116px; padding-bottom:17px; position:relative }
+.BC::after { content:''; position:absolute; bottom:17px; left:0; right:0; height:1px; background:var(--bd2) }
+.bc-c { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end }
+.bc-bs{ display:flex; gap:2px; align-items:flex-end; width:100%; height:99px }
+.bc-b { flex:1; border-radius:3px 3px 0 0; min-height:2px; transition:opacity .18s }
+.bc-b:hover { opacity:.72 }
+.bc-l { font-size:9.5px; color:var(--t3); margin-top:3px }
+
+/* ── BREAKDOWN ──────────────────────────────────── */
+.BD { display:flex; flex-direction:column; gap:5px }
+.bd-r { display:flex; align-items:center; gap:8px; padding:7px 10px;
+  border-radius:var(--r8); background:rgba(246,242,236,.5); transition:.15s }
+.bd-r:hover { background:rgba(246,242,236,.9) }
+.bd-n  { font-size:13px; font-weight:700; color:var(--t3); min-width:18px }
+.bd-nm { flex:1; font-size:13.5px; color:var(--t2) }
+.bd-bw { width:60px; height:4px; background:rgba(20,50,60,.08); border-radius:2px }
+.bd-bf { height:100%; border-radius:2px }
+.bd-a  { font-family:var(--FM); font-size:13.5px; font-weight:700; color:var(--t1); min-width:95px; text-align:right }
+
+/* ── PROFIT HERO ────────────────────────────────── */
+.PH { background:var(--s0); border:1px solid var(--bd); border-radius:var(--r12);
+  padding:20px 22px; box-shadow:var(--sh1); margin-bottom:13px;
+  display:flex; align-items:center; gap:20px; flex-wrap:wrap }
+.ph-l { flex:1; min-width:200px }
+.ph-lbl { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--t3); margin-bottom:4px }
+.ph-v { font-family:var(--FM); font-size:38px; font-weight:800; line-height:1; letter-spacing:-1px }
+.ph-pos { color:#156a3a } .ph-neg { color:#962038 }
+.ph-bal { display:grid; grid-template-columns:1fr 1fr; gap:9px; padding:13px 16px;
+  border-radius:var(--r8); background:rgba(20,50,60,.04); border:1px solid rgba(20,50,60,.08);
+  flex:1; min-width:190px }
+.ph-bl { font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--t3); margin-bottom:4px }
+.ph-bv { font-family:var(--FM); font-size:19px; font-weight:700; color:var(--t1) }
+
+/* ── STATES ─────────────────────────────────────── */
+.ld { display:flex; align-items:center; justify-content:center; gap:9px; padding:32px; color:var(--t3); font-size:13px }
+.sp { width:19px; height:19px; border:2px solid rgba(42,167,161,.15); border-top-color:var(--teal); border-radius:50%; animation:spi .7s linear infinite }
+@keyframes spi { to{transform:rotate(360deg)} }
+.em { display:flex; flex-direction:column; align-items:center; gap:8px; padding:32px; color:var(--t3); text-align:center }
+.em i { font-size:26px; opacity:.22 }
+.em p { font-size:13px }
+.pos { color:#156a3a } .neg { color:#962038 }
+
+/* ── TIMELINE ───────────────────────────────────── */
+.TL { display:flex; flex-direction:column }
+.tl-i { display:flex; gap:12px; padding:9px 0 }
+.tl-i:not(:last-child) { border-bottom:1px solid var(--bd2) }
+.tl-d { width:9px; height:9px; border-radius:50%; flex-shrink:0; margin-top:4px }
+.tl-b { flex:1; min-width:0 }
+.tl-h { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:3px; flex-wrap:wrap }
+.tl-ti { font-size:14px; font-weight:700; color:var(--t1) }
+.tl-dt { font-size:12px; color:var(--t3); font-family:var(--FM); white-space:nowrap }
+.tl-by { font-size:12px; color:var(--t3) }
+.tl-chips { display:flex; flex-wrap:wrap; gap:3px; margin-top:5px }
+.tc { font-size:12px; padding:3px 8px; border-radius:20px; background:rgba(20,50,60,.07); color:var(--t2); font-family:var(--FM) }
+
+/* ── STAGE FLOW ─────────────────────────────────── */
+.SF { display:flex; gap:0; overflow-x:auto; padding:2px 0 8px }
+.sf-s { display:flex; flex-direction:column; align-items:center; position:relative; min-width:76px; flex:1 }
+.sf-s:not(:last-child)::after { content:''; position:absolute; top:15px; left:50%; width:100%; height:2px; background:var(--bd); z-index:0 }
+.sf-s.done::after   { background:var(--teal) }
+.sf-s.prog::after   { background:linear-gradient(90deg,var(--teal),var(--bd)) }
+.sf-dot { width:30px; height:30px; border-radius:50%; border:2px solid var(--bd);
+  background:var(--s0); display:flex; align-items:center; justify-content:center;
+  font-size:12px; position:relative; z-index:1; transition:.18s }
+.sf-s.done .sf-dot { background:var(--teal); border-color:var(--teal); color:#fff }
+.sf-s.prog .sf-dot { border-color:var(--teal); color:var(--teal); box-shadow:0 0 0 4px rgba(42,167,161,.1) }
+.sf-s.wait .sf-dot { color:var(--t3) }
+.sf-nm { font-size:9.5px; font-weight:600; color:var(--t3); margin-top:5px; text-align:center; max-width:66px; line-height:1.3 }
+.sf-s.done .sf-nm { color:var(--teal) }
+.sf-s.prog .sf-nm { color:var(--deep); font-weight:700 }
+
+/* ── ORDER HERO ─────────────────────────────────── */
+.OH { background:var(--s0); border:1.5px solid var(--bd); border-radius:var(--r16);
+  overflow:hidden; box-shadow:var(--sh2); margin-bottom:16px }
+.OH-top { background:linear-gradient(130deg,var(--deep) 0%,color-mix(in srgb,var(--deep) 72%,var(--teal)) 100%);
+  padding:22px 24px; color:#fff; display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap }
+.oh-code  { font-family:var(--FM); font-size:28px; font-weight:800; margin-bottom:4px; letter-spacing:-.5px }
+.oh-model { font-size:17px; font-weight:800; opacity:.95; margin-bottom:3px }
+.oh-client{ font-size:14px; opacity:.75 }
+.oh-meta  { margin-top:9px; display:flex; gap:6px; flex-wrap:wrap }
+.oh-stats { display:flex; gap:0; flex-wrap:wrap; align-items:flex-start }
+.ohs { padding:7px 16px; border-left:1px solid rgba(255,255,255,.14); text-align:center }
+.ohs:first-child { border-left:none }
+.ohs-l { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.65; margin-bottom:3px }
+.ohs-v { font-family:var(--FM); font-size:22px; font-weight:700 }
+.OH-body { padding:18px 24px }
+
+/* ── ORDER LIST ─────────────────────────────────── */
+.OS-wrap { margin-bottom:16px }
+.os-inp { width:100%; height:38px; padding:0 38px 0 12px; border:1.5px solid var(--bd);
+  border-radius:var(--r8); background:var(--s0); font-family:var(--F);
+  font-size:13.5px; color:var(--t2); outline:none; box-shadow:var(--sh0);
+  transition:.18s; position:relative }
+.os-inp:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(42,167,161,.1) }
+.os-ico { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--t3); font-size:13px }
+.OL { display:grid; grid-template-columns:repeat(auto-fill,minmax(265px,1fr));
+  gap:9px; max-height:360px; overflow-y:auto; padding-right:3px }
+.OL::-webkit-scrollbar { width:4px }
+.OL::-webkit-scrollbar-track { background:rgba(20,50,60,.04); border-radius:2px }
+.OL::-webkit-scrollbar-thumb { background:rgba(20,50,60,.14); border-radius:2px }
+.oi { background:var(--s0); border:1.5px solid var(--bd); border-radius:var(--r8);
+  padding:11px 13px; cursor:pointer; display:flex; align-items:center; gap:10px;
+  box-shadow:var(--sh0); transition:.18s var(--spr) }
+.oi:hover { border-color:var(--teal); transform:translateY(-2px); box-shadow:var(--sh1) }
+.oi.on  { border-color:var(--teal); background:rgba(42,167,161,.03); box-shadow:0 0 0 2px rgba(42,167,161,.1) }
+.oi-inf { flex:1; min-width:0 }
+.oi-cd  { font-family:var(--FM); font-size:14px; font-weight:700; color:var(--teal) }
+.oi-mn  { font-size:13.5px; font-weight:700; color:var(--t1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.oi-cl  { font-size:12.5px; color:var(--t3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.oi-rt  { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0 }
+
+/* ── TABS ───────────────────────────────────────── */
+.tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:11px }
+.tab  { height:36px; padding:0 15px; border:1px solid var(--bd); border-radius:var(--r8);
+  background:var(--s0); color:var(--t3); font-family:var(--F); font-size:12.5px; font-weight:600;
+  cursor:pointer; display:inline-flex; align-items:center; gap:5px;
+  box-shadow:var(--sh0); transition:.15s }
+.tab:hover { border-color:var(--teal); color:var(--teal) }
+.tab.on { background:linear-gradient(135deg,var(--teal),var(--deep)); color:#fff; border-color:transparent; box-shadow:0 3px 10px rgba(42,167,161,.22) }
+.tp { display:none }
+.tp.on { display:block }
+
+/* ── WIP TABLE ──────────────────────────────────── */
+.WT { width:100%; border-collapse:collapse; font-size:12.5px; white-space:nowrap }
+.WT th { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+  color:var(--t3); padding:0 9px 8px; border-bottom:1px solid var(--bd) }
+.WT td { padding:7px 9px; border-bottom:1px solid rgba(20,50,60,.04) }
+.WT tbody tr:hover td { background:rgba(246,242,236,.55) }
+.wt-s { font-weight:700; font-size:13.5px; border-right:1px solid var(--bd2) }
+.wt-n { font-family:var(--FM); font-weight:600; color:var(--t1) }
+.wt-z { color:rgba(20,50,60,.2) }
+
+@media(max-width:580px){
+  .MG{grid-template-columns:1fr 1fr}
+  .fb{flex-direction:column;align-items:stretch}
+  .OL{grid-template-columns:1fr}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="R">
+
+<!-- FILTER BAR ─────────────────────────────────── -->
+<div class="fb">
+  <span class="fb-lbl"><i class="fas fa-sliders-h"></i> Давр</span>
+  <span class="fs">с</span>
+  <input type="date" id="ff" class="fi" style="width:148px">
+  <span class="fs">по</span>
+  <input type="date" id="ft" class="fi" style="width:148px">
+  <button class="b-go" onclick="applyF()"><i class="fas fa-search"></i> Қўллаш</button>
+  <button class="b-rst" onclick="resetF()"><i class="fas fa-times"></i> Тозалаш</button>
+  <div class="live"><div class="ldot"></div><span id="ts">—</span><span id="cnt"></span></div>
+</div>
+
+<!-- BLOCK GRID ─────────────────────────────────── -->
+<div id="bsel">
+  <div class="BG">
+    <div class="bb" id="bb-orders"     style="--BC:#2AA7A1" onclick="openB('orders')">
+      <div class="bb-ico"><i class="fas fa-file-invoice"></i></div>
+      <div class="bb-name">Буюртмалар</div>
+      <div class="bb-desc">Ҳолатлар, молия,<br>ҳар бир буюртма тафсилоти</div>
+      <div class="bb-val" id="bv-orders">—</div>
+      <div class="bb-tags" id="bt-orders"></div>
+    </div>
+    <div class="bb" id="bb-prod"       style="--BC:#5E42A6" onclick="openB('prod')">
+      <div class="bb-ico"><i class="fas fa-industry"></i></div>
+      <div class="bb-name">Ишлаб чиқариш</div>
+      <div class="bb-desc">Босқичлар бўйича ЖИ,<br>буюмлар ҳаракати</div>
+      <div class="bb-val" id="bv-prod">—</div>
+      <div class="bb-tags" id="bt-prod"></div>
+    </div>
+    <div class="bb" id="bb-svc"        style="--BC:#2F6FBA" onclick="openB('svc')">
+      <div class="bb-ico"><i class="fas fa-handshake"></i></div>
+      <div class="bb-name">Хизматлар</div>
+      <div class="bb-desc">Субпудрат,<br>ташқи фабрикалар</div>
+      <div class="bb-val" id="bv-svc">—</div>
+      <div class="bb-tags" id="bt-svc"></div>
+    </div>
+    <div class="bb" id="bb-fin"        style="--BC:#1F9956" onclick="openB('fin')">
+      <div class="bb-ico"><i class="fas fa-coins"></i></div>
+      <div class="bb-name">Молия</div>
+      <div class="bb-desc">Касса, тушум,<br>харажат, баланс</div>
+      <div class="bb-val" id="bv-fin">—</div>
+      <div class="bb-tags" id="bt-fin"></div>
+    </div>
+    <div class="bb" id="bb-wh"         style="--BC:#A8632A" onclick="openB('wh')">
+      <div class="bb-ico"><i class="fas fa-warehouse"></i></div>
+      <div class="bb-name">Омбор</div>
+      <div class="bb-desc">Қолдиқлар, ҳаракатлар,<br>тайёр маҳсулот</div>
+      <div class="bb-val" id="bv-wh">—</div>
+      <div class="bb-tags" id="bt-wh"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PANELS ─────────────────────────────────────── -->
+<div class="PN" id="pn-orders">
+  <div class="pn-nav">
+    <button class="b-bk" onclick="closeB()"><i class="fas fa-arrow-left"></i> Орқага</button>
+    <div class="pn-ttl"><div class="pn-ico" style="background:linear-gradient(135deg,#2AA7A1,#1E4A54)"><i class="fas fa-file-invoice"></i></div>Буюртмалар</div>
+  </div>
+  <div id="cOrders"><div class="ld"><div class="sp"></div>Юкланмоқда...</div></div>
+</div>
+
+<div class="PN" id="pn-prod">
+  <div class="pn-nav">
+    <button class="b-bk" onclick="closeB()"><i class="fas fa-arrow-left"></i> Орқага</button>
+    <div class="pn-ttl"><div class="pn-ico" style="background:linear-gradient(135deg,#5E42A6,#36208A)"><i class="fas fa-industry"></i></div>Ишлаб чиқариш</div>
+  </div>
+  <div id="cProd"><div class="ld"><div class="sp"></div>Юкланмоқда...</div></div>
+</div>
+
+<div class="PN" id="pn-svc">
+  <div class="pn-nav">
+    <button class="b-bk" onclick="closeB()"><i class="fas fa-arrow-left"></i> Орқага</button>
+    <div class="pn-ttl"><div class="pn-ico" style="background:linear-gradient(135deg,#2F6FBA,#164080)"><i class="fas fa-handshake"></i></div>Хизматлар</div>
+  </div>
+  <div id="cSvc"><div class="ld"><div class="sp"></div>Юкланмоқда...</div></div>
+</div>
+
+<div class="PN" id="pn-fin">
+  <div class="pn-nav">
+    <button class="b-bk" onclick="closeB()"><i class="fas fa-arrow-left"></i> Орқага</button>
+    <div class="pn-ttl"><div class="pn-ico" style="background:linear-gradient(135deg,#1F9956,#10562E)"><i class="fas fa-coins"></i></div>Молия</div>
+  </div>
+  <div id="cFin"><div class="ld"><div class="sp"></div>Юкланмоқда...</div></div>
+</div>
+
+<div class="PN" id="pn-wh">
+  <div class="pn-nav">
+    <button class="b-bk" onclick="closeB()"><i class="fas fa-arrow-left"></i> Орқага</button>
+    <div class="pn-ttl"><div class="pn-ico" style="background:linear-gradient(135deg,#A8632A,#6A3810)"><i class="fas fa-warehouse"></i></div>Омбор</div>
+  </div>
+  <div id="cWh"><div class="ld"><div class="sp"></div>Юкланмоқда...</div></div>
+</div>
+
+</div><!-- /.R -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ═══════════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════════ */
+const BLOCKS = ['orders','prod','svc','fin','wh'];
+const STAGE_NM = {cutting:'Кесиш',sorting:'Саралаш',sewing:'Тикиш',
+  cleaning:'Тозалаш',ironing:'Дазмоллаш',control:'Назорат',packing:'Қадоқлаш',finished:'Тайёр'};
+const STAGE_CL = {cutting:'#2AA7A1',sorting:'#2F6FBA',sewing:'#5E42A6',
+  cleaning:'#3abaaa',ironing:'#B56B10',control:'#C23B55',packing:'#1F9956',finished:'#1E4A54'};
+const TXN_NM = {create:'Кесиш',transfer:'Ўтказиш',grade:'Саралаш',scrap:'Брак',
+  income:'Тушум',issue:'Харажат',writeoff:'Ҳисобдан чиқариш',adjust:'Тузатиш'};
+const TXN_CL = {create:'tx-create',transfer:'tx-transfer',grade:'tx-grade',scrap:'tx-scrap',
+  income:'tx-income',issue:'tx-issue',writeoff:'tx-writeoff',adjust:'tx-adjust'};
+const STS_NM = {active:'Фаол',done:'Якунланди',cancelled:'Бекор қилинди'};
+const STS_CL = {active:'sts-active',done:'sts-done',cancelled:'sts-cancelled'};
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let curB = null, curOrd = null, autoT = null, cd = 60, allOrds = [];
+
+const ff = () => document.getElementById('ff').value;
+const ft = () => document.getElementById('ft').value;
+
+/* ═══════════════════════════════════════════════
+   FORMAT
+═══════════════════════════════════════════════ */
+const N  = (n,d=0)=>n==null?'—':parseFloat(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});
+const M  = n => N(n)+' сум';
+const MS = n=>{ n=parseFloat(n)||0; if(n>=1e9)return(n/1e9).toFixed(1)+'B сум'; if(n>=1e6)return(n/1e6).toFixed(1)+'M сум'; if(n>=1e3)return(n/1e3).toFixed(0)+'K сум'; return N(n)+' сум'; };
+const SH = n=>{ n=parseFloat(n)||0; if(n>=1e9)return(n/1e9).toFixed(1)+'B'; if(n>=1e6)return(n/1e6).toFixed(1)+'M'; if(n>=1e3)return(n/1e3).toFixed(0)+'K'; return String(Math.round(n)); };
+const DT = s=>{ try{ return new Date(s).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch{return s||'—';} };
+const D  = s=>{ try{ return new Date(s).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'}); }catch{return s||'—';} };
+
+/* ═══════════════════════════════════════════════
+   API
+═══════════════════════════════════════════════ */
+const qs = (x={})=>{ const p=new URLSearchParams(); if(ff())p.set('date_from',ff()); if(ft())p.set('date_to',ft()); Object.entries(x).forEach(([k,v])=>v!=null&&p.set(k,v)); return p.toString()?'?'+p.toString():''; };
+const api = async url=>{ const r=await fetch(url); const j=await r.json(); if(!j.success)throw new Error(j.message||'Хатолик'); return j.data !== undefined ? j.data : j; };
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+function openB(name){
+  curB = name;
+  document.getElementById('bsel').style.display = 'none';
+  BLOCKS.forEach(b=>{ document.getElementById('pn-'+b).classList.toggle('on',b===name); document.getElementById('bb-'+b).classList.toggle('sel',b===name); });
+  loadB(name);
+}
+function closeB(){
+  curB=null; curOrd=null;
+  document.getElementById('bsel').style.display='';
+  BLOCKS.forEach(b=>{ document.getElementById('pn-'+b).classList.remove('on'); document.getElementById('bb-'+b).classList.remove('sel'); });
+}
+function applyF(){ if(curB){ setL(curB); loadB(curB); } preload(); }
+function resetF(){ document.getElementById('ff').value=''; document.getElementById('ft').value=''; applyF(); }
+function setL(b){ const el=document.getElementById('c'+cap(b)); if(el)el.innerHTML=`<div class="ld"><div class="sp"></div>Маълумотлар юкланмоқда...</div>`; }
+const cap = s=>s.charAt(0).toUpperCase()+s.slice(1);
+const updTS = ()=>document.getElementById('ts').textContent='Янгил.: '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+function startAuto(){
+  clearInterval(autoT); cd=60;
+  autoT=setInterval(()=>{ cd--; const e=document.getElementById('cnt'); if(e)e.textContent=`(авт.${cd}с)`; if(cd<=0){cd=60;preload();if(curB)loadB(curB);} },1000);
+}
+
+async function loadB(name){
+  try{
+    if(name==='orders') await loadOrders();
+    if(name==='prod')   await loadProd();
+    if(name==='svc')    await loadSvc();
+    if(name==='fin')    await loadFin();
+    if(name==='wh')     await loadWh();
+    updTS();
+  }catch(e){ const el=document.getElementById('c'+cap(name)); if(el)el.innerHTML=`<div class="em"><i class="fas fa-exclamation-triangle"></i><p>Хатолик: ${e.message}</p></div>`; }
+}
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+const mc  = (lbl,val,ico,c,sub='',sm=false) =>
+  `<div class="mc" style="--C:${c}"><div class="mc-glo"></div><div class="mc-lbl"><i class="${ico}"></i>${lbl}</div><div class="mc-val${sm?' s':''}">${val}</div>${sub?`<div class="mc-sub">${sub}</div>`:''}</div>`;
+
+const card = (ttl,ico,bg,body,right='') =>
+  `<div class="card"><div class="card-h"><div class="card-hl"><div class="card-ico" style="background:${bg}"><i class="${ico}"></i></div><div class="card-ttl">${ttl}</div></div><div class="card-r">${right}</div></div>${body}</div>`;
+
+const bdg  = (t,c) => `<span class="B ${c}">${t}</span>`;
+const txb  = t => `<span class="txb ${TXN_CL[t]||'tx-adjust'}">${TXN_NM[t]||t}</span>`;
+const donut = (pct,color,label,legs) => {
+  const circ=2*Math.PI*40;
+  return `<div class="dw"><svg class="ds" viewBox="0 0 100 100"><circle class="d-bg" cx="50" cy="50" r="40"/><circle class="d-fg" cx="50" cy="50" r="40" stroke="${color}" stroke-dasharray="${(pct/100*circ).toFixed(1)} ${circ.toFixed(1)}"/><text class="d-t" x="50" y="46">${pct}%</text><text class="d-s" x="50" y="57">${label}</text></svg><div class="lg">${legs}</div></div>`;
+};
+const lgr  = (c,n,v) => `<div class="lg-r"><div class="lg-d" style="background:${c}"></div><div class="lg-n">${n}</div><div class="lg-v">${v}</div></div>`;
+
+/* ═══════════════════════════════════════════════
+   ██ ORDERS
+═══════════════════════════════════════════════ */
+async function loadOrders(){
+  const [st, ord] = await Promise.all([
+    api('/api/stats/orders'+qs()),
+    api('/api/orders'+qs({limit:500}))
+  ]);
+  allOrds = Array.isArray(ord) ? ord : (ord.orders || []);
+
+  // update badge
+  document.getElementById('bb-orders').classList.add('rdy');
+  document.getElementById('bv-orders').textContent = st.total;
+  document.getElementById('bt-orders').innerHTML = `<span class="bbtag">${st.active} фаол</span><span class="bbtag">${st.done} ёпилган</span>`;
+
+  const totalSum = parseFloat(st.total_sum||0);
+  const tot = st.total||1;
+  const actPct = Math.round(st.active/tot*100);
+
+  let html = `<div class="MG">
+    ${mc('Жами буюртмалар',   N(st.total),           'fas fa-list',            '#2AA7A1')}
+    ${mc('Фаоллар',        N(st.active),          'fas fa-play-circle',     '#1F9956')}
+    ${mc('Ишлаб чиқаришда',  N(st.in_production),   'fas fa-cogs',            '#5E42A6')}
+    ${mc('Тайёрлар бор',    N(st.with_finished),   'fas fa-check-circle',    '#2F6FBA')}
+    ${mc('Ёпилганлар',        N(st.done),            'fas fa-lock',            '#2AA7A1')}
+    ${mc('Бекор қилинганлар',      N(st.cancelled),       'fas fa-ban',             '#C23B55')}
+    ${mc('Буюртмалар суммаси',   MS(totalSum),          'fas fa-money-bill-wave', '#A8632A', N(st.total_qty||0)+' дона', true)}
+  </div>`;
+
+  // KPI row
+  html += `<div class="GR2">
+    ${card('Буюртмалар тақсимоти','fas fa-chart-pie','#2AA7A1',
+      donut(actPct,'#2AA7A1','фаол',
+        lgr('#1F9956','Фаоллар',N(st.active))+
+        lgr('#5E42A6','Ишлаб чиқаришда',N(st.in_production))+
+        lgr('#2F6FBA','Ёпилганлар',N(st.done))+
+        lgr('#C23B55','Бекор қилинганлар',N(st.cancelled))
+      )
+    )}
+    ${card('Буюртмалар молияси','fas fa-coins','#1F9956',
+      `<div style="display:flex;flex-direction:column;gap:13px">
+        <div><div class="mc-lbl" style="margin-bottom:4px">Умумий сумма</div><div style="font-family:var(--FM);font-size:26px;font-weight:600;color:var(--t1)">${M(totalSum)}</div></div>
+        <div><div class="mc-lbl" style="margin-bottom:4px">Жами буюмлар</div><div style="font-family:var(--FM);font-size:20px;font-weight:600;color:var(--t1)">${N(st.total_qty)} дона</div></div>
+        ${totalSum>0&&st.total>0?`<div><div class="mc-lbl" style="margin-bottom:4px">Ўртача буюртма</div><div style="font-family:var(--FM);font-size:17px;font-weight:600;color:var(--t1)">${M(totalSum/st.total)}</div></div>`:''}
+      </div>`
+    )}
+  </div>`;
+
+  // ORDERS LIST + DETAIL
+  html += `<div class="GR12" style="align-items:start">
+    <div>
+      ${card('Буюртмалар рўйхати','fas fa-list','#2AA7A1',`
+        <div class="OS-wrap" style="position:relative">
+          <input type="text" class="os-inp" id="osq" placeholder="Артикул, модель, мижоз бўйича қидириш..." oninput="filterOrds()">
+          <i class="fas fa-search os-ico"></i>
+        </div>
+        <div class="OL" id="OL">${renderOrdList(allOrds)}</div>
+      `)}
+    </div>
+    <div id="OD"><div class="em" style="margin-top:48px"><i class="fas fa-hand-pointer"></i><p>Тафсилотlarni кўриш учун<br>ruyxatdan buyurtma tanlang</p></div></div>
+  </div>`;
+
+  document.getElementById('cOrders').innerHTML = html;
+}
+
+function renderOrdList(list){
+  if(!list.length) return `<div class="em"><i class="fas fa-inbox"></i><p>Буюртмалар йўқ</p></div>`;
+  return list.map(o=>`
+    <div class="oi ${curOrd===o.id?'on':''}" onclick="loadOrd(${o.id})" id="oi-${o.id}">
+      <div class="oi-inf">
+        <div class="oi-cd">${o.order_code}</div>
+        <div class="oi-mn">${o.model}</div>
+        <div class="oi-cl">${o.client}</div>
+      </div>
+      <div class="oi-rt">
+        <span class="B ${STS_CL[o.status]||'Bm'}" style="font-size:10px">${STS_NM[o.status]||o.status}</span>
+        <span style="font-family:var(--FM);font-size:10.5px;color:var(--t3)">${N(o.quantity)} дона</span>
+      </div>
+    </div>`).join('');
+}
+
+function filterOrds(){
+  const q = document.getElementById('osq').value.toLowerCase();
+  const list = q ? allOrds.filter(o=>o.order_code.toLowerCase().includes(q)||o.model.toLowerCase().includes(q)||o.client.toLowerCase().includes(q)) : allOrds;
+  document.getElementById('OL').innerHTML = renderOrdList(list);
+}
+
+async function loadOrd(id){
+  curOrd = id;
+  document.querySelectorAll('.oi').forEach(e=>e.classList.toggle('on', parseInt(e.id.split('-')[1])===id));
+  const od = document.getElementById('OD');
+  od.innerHTML = `<div class="ld"><div class="sp"></div>Буюртма юкланмоқда...</div>`;
+  try{
+    const d = await api('/api/stats/orders/'+id+'/detail');
+    od.innerHTML = renderOrdDetail(d);
+  }catch(e){
+    od.innerHTML = `<div class="em"><i class="fas fa-exclamation-triangle"></i><p>Хатолик: ${e.message}</p></div>`;
+  }
+}
+
+function renderOrdDetail(d){
+  const tot_qty = (d.items||[]).reduce((s,i)=>s+i.qty,0);
+  const profit  = (d.total_income||0) - (d.total_expenses||0);
+
+  /* ── Stage flow ── */
+  const stageFlow = (d.stages||[]).map(s=>{
+    let cls='wait', ico='fas fa-circle';
+    if(s.status==='completed'){cls='done';ico='fas fa-check';}
+    else if(s.status==='in-progress'){cls='prog';ico='fas fa-spinner fa-spin';}
+    return `<div class="sf-s ${cls}"><div class="sf-dot"><i class="${ico}" style="font-size:10px"></i></div><div class="sf-nm">${s.name}</div></div>`;
+  }).join('');
+
+  /* ── Items table ── */
+  const itemRows = (d.items||[]).map(i=>`<tr><td>${i.color}</td><td class="nc">${i.size}</td><td class="nr">${N(i.qty)}</td></tr>`).join('');
+
+  /* ── WIP by stage ── */
+  const STAGES = ['cutting','sorting','sewing','cleaning','ironing','control','packing','finished'];
+  let wipRows = '';
+  STAGES.forEach(sk=>{
+    const rows = (d.wip_by_stage||{})[sk]||[];
+    if(!rows.length) return;
+    rows.forEach((r,i)=>{
+      const gb = r.grade ? bdg('Нав '+r.grade, r.grade==='1'?'Bg':r.grade==='1.5'?'Ba':'Br') : '';
+      wipRows += `<tr>
+        ${i===0?`<td rowspan="${rows.length}" class="wt-s" style="color:${STAGE_CL[sk]||'#888'}">${STAGE_NM[sk]||sk}</td>`:''}
+        <td>${r.color}</td><td>${r.size}</td><td>${gb||'—'}</td>
+        <td class="wt-n nr">${N(r.qty)}</td>
+      </tr>`;
+    });
+  });
+
+  /* ── WIP history ── */
+  const wipHist = (d.wip_history||[]).slice(0,20).map(t=>{
+    const fromTo = [t.from_stage,t.to_stage].filter(Boolean).map(s=>STAGE_NM[s]||s).join(' → ');
+    const chips = (t.lines||[]).map(l=>`<span class="tc">${l.color}/${l.size}${l.grade?' с'+l.grade:''}: ${l.qty}шт</span>`).join('');
+    return `<div class="tl-i">
+      <div class="tl-d" style="background:${STAGE_CL[t.to_stage||t.from_stage]||'#aaa'};margin-top:4px"></div>
+      <div class="tl-b">
+        <div class="tl-h">
+          <div style="display:flex;align-items:center;gap:7px">${txb(t.txn_type)}<span class="tl-ti">${fromTo||'—'}</span></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+            <span class="tl-dt">${DT(t.created_at)}</span>
+            ${t.created_by_username?`<span class="tl-by">${t.created_by_username}</span>`:''}
+          </div>
+        </div>
+        ${t.comment?`<div style="font-size:12px;color:var(--t3);margin-bottom:3px">${t.comment}</div>`:''}
+        <div class="tl-chips">${chips}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:3px">Жами: <b>${t.total_qty||0} дона</b></div>
+      </div>
+    </div>`;
+  }).join('') || `<div class="em"><i class="fas fa-history"></i><p>Ҳаракатлар йўқ</p></div>`;
+
+  /* ── Warehouse history ── */
+  const whHist = (d.warehouse_history||[]).slice(0,15).map(t=>{
+    const chips = (t.lines||[]).map(l=>`<span class="tc">${l.product_name}: ${N(l.qty,2)} ${l.unit}</span>`).join('');
+    const locs  = [t.from_location,t.to_location].filter(Boolean).join(' → ');
+    return `<div class="tl-i">
+      <div class="tl-d" style="background:#A8632A;margin-top:4px"></div>
+      <div class="tl-b">
+        <div class="tl-h">
+          <div style="display:flex;align-items:center;gap:7px">${txb(t.txn_type)}${locs?`<span style="font-size:12px;color:var(--t3)">${locs}</span>`:''}</div>
+          <span class="tl-dt">${DT(t.created_at)}</span>
+        </div>
+        <div class="tl-chips">${chips}</div>
+      </div>
+    </div>`;
+  }).join('') || `<div class="em"><i class="fas fa-boxes"></i><p>Операциялар йўқ</p></div>`;
+
+  /* ── Expenses ── */
+  const expRows = (d.expenses||[]).slice(0,15).map(e=>`<tr>
+    <td style="font-family:var(--FM);font-size:11px">${DT(e.created_at)}</td>
+    <td>${e.expense_type}</td><td style="color:var(--t3)">${e.comment||'—'}</td>
+    <td class="nr neg">${M(e.amount)}</td>
+    <td class="nc">${e.payment_type==='cash'?'Нақд':'Ҳисоб'}</td>
+  </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:14px">Харажатлар йўқ</td></tr>`;
+
+  /* ── Income ── */
+  const incRows = (d.income||[]).slice(0,15).map(i=>`<tr>
+    <td style="font-family:var(--FM);font-size:11px">${DT(i.created_at)}</td>
+    <td>${i.source}</td><td style="color:var(--t3)">${i.comment||'—'}</td>
+    <td class="nr pos">${M(i.amount)}</td>
+    <td class="nc">${i.payment_type==='cash'?'Нақд':'Ҳисоб'}</td>
+  </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:14px">Тушумлар йўқ</td></tr>`;
+
+  /* ── Warehouse stock ── */
+  const stRows = (d.warehouse_stock||[]).map(r=>`<tr>
+    <td>${r.location_name}</td><td>${r.product_name}</td>
+    <td class="nr">${N(r.qty,2)} ${r.unit}</td>
+  </tr>`).join('') || `<tr><td colspan="3" style="text-align:center;color:var(--t3);padding:14px">Қолдиқлар йўқ</td></tr>`;
+
+  /* ── Services ── */
+  const svcRows = (d.services||[]).map(s=>`<tr>
+    <td><b>${s.factory_name}</b></td>
+    <td style="font-size:12px">${s.stage_from&&s.stage_to?`${STAGE_NM[s.stage_from]||s.stage_from} → ${STAGE_NM[s.stage_to]||s.stage_to}`:'—'}</td>
+    <td style="font-family:var(--FM);font-size:11.5px">${D(s.transfer_date)}</td>
+    <td class="nc">${N(s.total_qty)}</td><td class="nr">${M(s.total_amount)}</td>
+    <td>${bdg(s.status==='active'?'Фаол':s.status==='completed'?'Якунланди':'Кутилмоқда',s.status==='active'?'Bg':s.status==='completed'?'Bt':'Ba')}</td>
+  </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:14px">Хизматлар йўқ</td></tr>`;
+
+  return `
+  <!-- ORDER HERO -->
+  <div class="OH">
+    <div class="OH-top">
+      <div>
+        <div class="oh-code">${d.order_code}</div>
+        <div class="oh-model">${d.model}</div>
+        <div class="oh-client"><i class="fas fa-user" style="opacity:.55;margin-right:4px"></i>${d.client}</div>
+        <div class="oh-meta">
+          ${bdg(STS_NM[d.status]||d.status, STS_CL[d.status]||'Bm')}
+          ${bdg(d.currency,'Bb')}
+          ${bdg('Юборилди: '+D(d.shipment_date),'Bm')}
+          ${d.notes?`<span style="font-size:11px;opacity:.6;font-style:italic">${d.notes}</span>`:''}
+        </div>
+      </div>
+      <div class="oh-stats">
+        <div class="ohs"><div class="ohs-l">Буюмлар</div><div class="ohs-v">${N(tot_qty)}</div></div>
+        <div class="ohs"><div class="ohs-l">Нарх/дона</div><div class="ohs-v">${N(d.price_per_unit,0)}</div></div>
+        <div class="ohs"><div class="ohs-l">Сумма</div><div class="ohs-v">${SH(d.total_amount)}</div></div>
+        <div class="ohs"><div class="ohs-l">ЖИда</div><div class="ohs-v">${N(d.wip_total)}</div></div>
+        <div class="ohs"><div class="ohs-l">Хизматлар</div><div class="ohs-v">${N((d.services||[]).length)}</div></div>
+      </div>
+    </div>
+    <div class="OH-body">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:5px">Ишлаб чиқариш босқичлари</div>
+      <div class="SF">${stageFlow}</div>
+    </div>
+  </div>
+
+  <!-- FINANCE + ITEMS + STOCK -->
+  <div class="GR3">
+    ${card('Буюртма молияси','fas fa-coins','#1F9956',`
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <div><div class="mc-lbl" style="margin-bottom:3px">Буюртма суммаси</div><div style="font-family:var(--FM);font-size:21px;font-weight:600;color:var(--t1)">${M(d.total_amount)}</div></div>
+        <div><div class="mc-lbl" style="margin-bottom:3px">Қабул қилинган</div><div style="font-family:var(--FM);font-size:19px;font-weight:600" class="pos">${M(d.total_income)}</div></div>
+        <div><div class="mc-lbl" style="margin-bottom:3px">Харажатлар</div><div style="font-family:var(--FM);font-size:19px;font-weight:600" class="neg">${M(d.total_expenses)}</div></div>
+        <div style="padding-top:9px;border-top:1px solid var(--bd2)">
+          <div class="mc-lbl" style="margin-bottom:3px">Баланс</div>
+          <div style="font-family:var(--FM);font-size:21px;font-weight:600" class="${profit>=0?'pos':'neg'}">${profit>=0?'+':''}${M(profit)}</div>
+        </div>
+      </div>
+    `)}
+    ${card('Буюртма позициялари','fas fa-table','#2F6FBA',`
+      <table class="T">
+        <thead><tr><th>Ранг</th><th class="nc">Ўлчам</th><th style="text-align:right">Миқдор</th></tr></thead>
+        <tbody>${itemRows}</tbody>
+        <tfoot><tr><td colspan="2">Жами</td><td class="nr">${N(tot_qty)} дона</td></tr></tfoot>
+      </table>
+    `)}
+    ${card('Омбордаги қолдиқлар','fas fa-boxes','#A8632A',`
+      <table class="T">
+        <thead><tr><th>Жой</th><th>Материал</th><th style="text-align:right">Миқдор</th></tr></thead>
+        <tbody>${stRows}</tbody>
+      </table>
+    `)}
+  </div>
+
+  <!-- WIP CURRENT -->
+  ${wipRows
+    ? card('Жорий ЖИ — буюмлар қаерда','fas fa-stream','#5E42A6',`<div style="overflow-x:auto"><table class="WT"><thead><tr><th>Этап</th><th>Ранг</th><th>Ўлчам</th><th>Нав</th><th style="text-align:right">Миқдор</th></tr></thead><tbody>${wipRows}</tbody></table></div>`)
+    : card('WIP','fas fa-stream','#5E42A6','<div class="em"><i class="fas fa-check-circle"></i><p>Ишлаб чиқаришда буюмлар йўқ</p></div>')
+  }
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab on" onclick="swTab(this,'tp-wip')"><i class="fas fa-history"></i> Ишлаб чиқариш тарихи</button>
+    <button class="tab"    onclick="swTab(this,'tp-wh')"><i class="fas fa-warehouse"></i> Омбор тарихи</button>
+    <button class="tab"    onclick="swTab(this,'tp-exp')"><i class="fas fa-arrow-up" style="color:var(--red)"></i> Харажатлар (${(d.expenses||[]).length})</button>
+    <button class="tab"    onclick="swTab(this,'tp-inc')"><i class="fas fa-arrow-down" style="color:var(--green)"></i> Тушумлар (${(d.income||[]).length})</button>
+    <button class="tab"    onclick="swTab(this,'tp-svc')"><i class="fas fa-handshake"></i> Хизматлар (${(d.services||[]).length})</button>
+  </div>
+
+  <div class="tp on card" id="tp-wip">
+    <div class="card-h"><div class="card-hl"><div class="card-ico" style="background:#5E42A6"><i class="fas fa-history"></i></div><div class="card-ttl">Буюмлар ҳаракати тарихи</div></div></div>
+    <div class="TL">${wipHist}</div>
+  </div>
+  <div class="tp card" id="tp-wh">
+    <div class="card-h"><div class="card-hl"><div class="card-ico" style="background:#A8632A"><i class="fas fa-warehouse"></i></div><div class="card-ttl">Омбор тарихи по заказу</div></div></div>
+    <div class="TL">${whHist}</div>
+  </div>
+  <div class="tp card" id="tp-exp">
+    <div class="card-h"><div class="card-hl"><div class="card-ico" style="background:#C23B55"><i class="fas fa-arrow-up"></i></div><div class="card-ttl">Харажатлар по заказу</div></div><div class="card-r neg">${M(d.total_expenses)}</div></div>
+    <table class="T"><thead><tr><th>Сана</th><th>Тур</th><th>Изоҳ</th><th style="text-align:right">Сумма</th><th class="nc">Тўлов</th></tr></thead><tbody>${expRows}</tbody></table>
+  </div>
+  <div class="tp card" id="tp-inc">
+    <div class="card-h"><div class="card-hl"><div class="card-ico" style="background:#1F9956"><i class="fas fa-arrow-down"></i></div><div class="card-ttl">Тушумлар по заказу</div></div><div class="card-r pos">${M(d.total_income)}</div></div>
+    <table class="T"><thead><tr><th>Сана</th><th>Манба</th><th>Изоҳ</th><th style="text-align:right">Сумма</th><th class="nc">Тўлов</th></tr></thead><tbody>${incRows}</tbody></table>
+  </div>
+  <div class="tp card" id="tp-svc">
+    <div class="card-h"><div class="card-hl"><div class="card-ico" style="background:#2F6FBA"><i class="fas fa-handshake"></i></div><div class="card-ttl">Хизматлар по заказу</div></div><div class="card-r">${M(d.services_total)}</div></div>
+    <table class="T"><thead><tr><th>Фабрика</th><th>Босқичлар</th><th>Сана</th><th class="nc">Миқдор</th><th style="text-align:right">Сумма</th><th>Статус</th></tr></thead><tbody>${svcRows}</tbody></table>
+  </div>`;
+}
+
+function swTab(btn, tpId){
+  document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tp').forEach(p=>{ p.classList.remove('on'); p.style.display='none'; });
+  btn.classList.add('on');
+  const tp = document.getElementById(tpId);
+  if(tp){ tp.classList.add('on'); tp.style.display=''; }
+}
+
+/* ═══════════════════════════════════════════════
+   ██ PRODUCTION
+═══════════════════════════════════════════════ */
+async function loadProd(){
+  const d = await api('/api/stats/production'+qs());
+  const tot = Object.values(d.by_stage||{}).reduce((a,b)=>a+b,0);
+  document.getElementById('bb-prod').classList.add('rdy');
+  document.getElementById('bv-prod').textContent = tot+' дона';
+  document.getElementById('bt-prod').innerHTML = `<span class="bbtag">${N(d.finished)} тайёр</span><span class="bbtag">${N(d.scrap)} брак</span>`;
+
+  const stgs=[
+    {k:'cutting',n:'Кесиш',c:'#2AA7A1'},{k:'sorting',n:'Саралаш',c:'#2F6FBA'},
+    {k:'sewing',n:'Тикиш',c:'#5E42A6'},{k:'cleaning',n:'Тозалаш',c:'#3abaaa'},
+    {k:'ironing',n:'Дазмоллаш',c:'#B56B10'},{k:'control',n:'Назорат',c:'#C23B55'},
+    {k:'packing',n:'Қадоқлаш',c:'#1F9956'},{k:'finished',n:'Тайёр',c:'#1E4A54'},
+  ];
+  const maxQ = Math.max(...stgs.map(s=>d[s.k]||0),1);
+  const total_wip = stgs.reduce((s,st)=>s+(d[st.k]||0),0);
+
+  const plRows = stgs.map(s=>{
+    const q=d[s.k]||0, pct=total_wip>0?(q/total_wip*100).toFixed(1):'0';
+    return `<div class="pl-r">
+      <div class="pl-dot" style="background:${s.c}"></div>
+      <div class="pl-nm">${s.n}</div>
+      <div class="pl-bw"><div class="pl-bf" style="width:${(q/maxQ*100).toFixed(1)}%;background:${s.c}"></div></div>
+      <div class="pl-pct">${pct}%</div>
+      <div class="pl-qty">${N(q)} дона</div>
+    </div>`;
+  }).join('');
+
+  const scrapRow = `<div class="pl-r scr">
+    <div class="pl-dot" style="background:#C23B55"></div>
+    <div class="pl-nm" style="color:#962038">⚠ Брак (списано)</div>
+    <div class="pl-bw"><div class="pl-bf" style="width:${((d.scrap||0)/maxQ*100).toFixed(1)}%;background:#C23B55"></div></div>
+    <div class="pl-pct" style="color:#962038"></div>
+    <div class="pl-qty" style="color:#962038">${N(d.scrap)} дона</div>
+  </div>`;
+
+  const finPct = total_wip>0?Math.round((d.finished||0)/total_wip*100):0;
+  const dnut = donut(finPct,'#1E4A54','тайёр',
+    stgs.map(s=>lgr(s.c,s.n,N(d[s.k]||0))).join('')+
+    lgr('#C23B55','Брак',N(d.scrap||0))
+  );
+
+  let html = `<div class="MG">
+    ${mc('ЖИда жами',N(total_wip),'fas fa-cogs','#5E42A6')}
+    ${mc('Тайёрлар',N(d.finished),'fas fa-check-circle','#1E4A54')}
+    ${mc('Брак',N(d.scrap),'fas fa-times-circle','#C23B55')}
+  </div>
+  <div class="GR2">
+    ${card('Босқичлар бўйича тақсимот','fas fa-layer-group','#5E42A6',`<div class="PL">${plRows}${scrapRow}</div>`)}
+    ${card('Тайёр маҳсулот улуши','fas fa-chart-pie','#1E4A54',dnut)}
+  </div>`;
+
+  document.getElementById('cProd').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════
+   ██ SERVICES
+═══════════════════════════════════════════════ */
+async function loadSvc(){
+  const d = await api('/api/stats/services'+qs());
+  document.getElementById('bb-svc').classList.add('rdy');
+  document.getElementById('bv-svc').textContent = d.total;
+  document.getElementById('bt-svc').innerHTML = `<span class="bbtag">${d.active} фаол</span>`;
+
+  const tot=d.total||1, actP=Math.round(d.active/tot*100);
+  const dnut = donut(actP,'#2F6FBA','фаол',
+    lgr('#1F9956','Фаоллар',N(d.active))+
+    lgr('#2AA7A1','Якунланганлар',N(d.completed))+
+    lgr('#B56B10','Кутилмоқда',N(d.pending))+
+    lgr('#C23B55','Бекор қилинганлар',N(d.cancelled))
+  );
+
+  let html = `<div class="MG">
+    ${mc('Жами',N(d.total),'fas fa-list','#2F6FBA')}
+    ${mc('Фаоллар',N(d.active),'fas fa-spinner','#1F9956')}
+    ${mc('Якунланганлар',N(d.completed),'fas fa-check','#2AA7A1')}
+    ${mc('Кутилмоқда',N(d.pending),'fas fa-clock','#B56B10')}
+    ${mc('Бекор қилинганлар',N(d.cancelled),'fas fa-ban','#C23B55')}
+    ${mc('Умумий сумма',MS(d.total_sum),'fas fa-money-bill','#2F6FBA',N(d.total_qty)+' дона',true)}
+  </div>
+  <div class="GR2">
+    ${card('Хизматлар ҳолати','fas fa-chart-pie','#2F6FBA',dnut)}
+    ${card('Молия','fas fa-coins','#1F9956',`
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div><div class="mc-lbl" style="margin-bottom:3px">Умумий сумма</div><div style="font-family:var(--FM);font-size:24px;font-weight:600;color:var(--t1)">${M(d.total_sum)}</div></div>
+        <div><div class="mc-lbl" style="margin-bottom:3px">Буюмлар ишланган</div><div style="font-family:var(--FM);font-size:19px;font-weight:600;color:var(--t1)">${N(d.total_qty)} дона</div></div>
+        ${d.total>0?`<div><div class="mc-lbl" style="margin-bottom:3px">Ўртача нарх</div><div style="font-family:var(--FM);font-size:17px;font-weight:600;color:var(--t1)">${M(d.total_sum/d.total)}</div></div>`:''}
+      </div>
+    `)}
+  </div>`;
+
+  document.getElementById('cSvc').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════
+   ██ FINANCE
+═══════════════════════════════════════════════ */
+async function loadFin(){
+  const d = await api('/api/stats/finance'+qs());
+  document.getElementById('bb-fin').classList.add('rdy');
+  document.getElementById('bv-fin').textContent = SH(d.balance?.total||0);
+  const ps = d.profit>=0?'+':'';
+  document.getElementById('bt-fin').innerHTML = `<span class="bbtag">${ps}${SH(d.profit)} жами</span>`;
+
+  const profit = d.profit||0;
+  let html = `<div class="MG">
+    ${mc('Умумий тушум', MS(d.total_income),   'fas fa-arrow-circle-down', '#1F9956')}
+    ${mc('Умумий харажат', MS(d.total_expenses), 'fas fa-arrow-circle-up',   '#C23B55')}
+    ${mc('Нақд пул',    MS(d.balance?.cash),  'fas fa-money-bill',        '#2AA7A1')}
+    ${mc('Ҳисобда',     MS(d.balance?.account),'fas fa-university',       '#2F6FBA')}
+  </div>`;
+
+  // Profit hero
+  html += `<div class="PH">
+    <div class="ph-l">
+      <div class="ph-lbl">Фойда / Зарар</div>
+      <div class="ph-v ${profit>=0?'ph-pos':'ph-neg'}">${profit>=0?'+':''}${M(profit)}</div>
+    </div>
+    <div class="ph-bal">
+      <div><div class="ph-bl">Нақд пул</div><div class="ph-bv">${M(d.balance?.cash)}</div></div>
+      <div><div class="ph-bl">Ҳисобда</div><div class="ph-bv">${M(d.balance?.account)}</div></div>
+      <div><div class="ph-bl">Жами қолдиқ</div><div class="ph-bv">${M(d.balance?.total)}</div></div>
+      <div><div class="ph-bl">Тушум / Харажат</div><div class="ph-bv" style="font-size:14px">${d.total_expenses>0?N(d.total_income/d.total_expenses*100,1):'∞'}%</div></div>
+    </div>
+  </div>`;
+
+  html += `<div class="GR2">
+    ${card('Ойлик — сўнгги 6 ой','fas fa-chart-bar','#1F9956', buildChart(d.income_monthly,d.expense_monthly))}
+    ${card('Асосий харажат моддалари','fas fa-list-ol','#C23B55', buildBkd(d.by_expense_type))}
+  </div>`;
+
+  document.getElementById('cFin').innerHTML = html;
+}
+
+function buildChart(im,em){
+  const all=[...new Set([...Object.keys(im||{}),...Object.keys(em||{})])].sort().reverse().slice(0,6).reverse();
+  if(!all.length) return `<div class="em"><i class="fas fa-chart-bar"></i><p>Маълумот йўқ</p></div>`;
+  const iv=all.map(m=>(im||{})[m]||0), ev=all.map(m=>(em||{})[m]||0);
+  const mx=Math.max(...iv,...ev,1);
+  const lbls=all.map(m=>{ const[y,mo]=m.split('-'); return new Date(y,parseInt(mo)-1).toLocaleDateString('ru-RU',{month:'short'}); });
+  const bars=all.map((m,i)=>{
+    const ih=(iv[i]/mx*99).toFixed(1), eh=(ev[i]/mx*99).toFixed(1);
+    return `<div class="bc-c"><div class="bc-bs">
+      <div class="bc-b" style="height:${ih}px;background:linear-gradient(to top,#1F9956,#52D6C9)" title="${M(iv[i])}"></div>
+      <div class="bc-b" style="height:${eh}px;background:linear-gradient(to top,#C23B55,#E89090)" title="${M(ev[i])}"></div>
+    </div><div class="bc-l">${lbls[i]}</div></div>`;
+  }).join('');
+  return `<div class="BC">${bars}</div>
+    <div style="display:flex;gap:13px;margin-top:9px;font-size:11px;color:var(--t3)">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:#1F9956;border-radius:2px;display:inline-block"></span>Тушум</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:#C23B55;border-radius:2px;display:inline-block"></span>Харажат</span>
+    </div>`;
+}
+
+function buildBkd(items){
+  if(!items||!items.length) return `<div class="em"><i class="fas fa-list"></i><p>Маълумот йўқ</p></div>`;
+  const mx=Math.max(...items.map(i=>i.amount),1);
+  return `<div class="BD">`+items.slice(0,8).map((it,i)=>
+    `<div class="bd-r"><div class="bd-n">${i+1}.</div><div class="bd-nm">${it.type}</div>
+    <div class="bd-bw"><div class="bd-bf" style="width:${(it.amount/mx*100).toFixed(1)}%;background:linear-gradient(90deg,#C23B55,#E89090)"></div></div>
+    <div class="bd-a">${M(it.amount)}</div></div>`
+  ).join('')+`</div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   ██ WAREHOUSE
+═══════════════════════════════════════════════ */
+async function loadWh(){
+  const d = await api('/api/stats/warehouse'+qs());
+  document.getElementById('bb-wh').classList.add('rdy');
+  document.getElementById('bv-wh').textContent = d.total_products+' номенк.';
+  document.getElementById('bt-wh').innerHTML = `<span class="bbtag">${N(d.finished_total)} тайёр</span><span class="bbtag">${N(d.scrap_qty,1)} брак</span>`;
+
+  const STAGE_LABELS = {
+    cutting:'Кесиш', sorting:'Саралаш', sewing:'Тикиш',
+    cleaning:'Тозалаш', ironing:'Дазмоллаш', control:'Назорат',
+    packing:'Қадоқлаш', finished:'Тайёр', unknown:'Номаълум'
+  };
+  const STAGE_COLORS = {
+    cutting:'#2AA7A1', sorting:'#5B8BD0', sewing:'#9B6DD0',
+    cleaning:'#4BBFA8', ironing:'#E8954A', control:'#E84A6E',
+    packing:'#3AAA5C', finished:'#1E4A54', unknown:'#aaa'
+  };
+
+  let html = `<div class="MG">
+    ${mc('Номенклатура',   N(d.total_products),     'fas fa-tags',        '#A8632A')}
+    ${mc('Қолдиқ (омбор)',N(d.total_materials_qty,1),'fas fa-boxes',      '#2AA7A1','бирлик асосий омбор')}
+    ${mc('Тайёр буюмлар',   N(d.finished_total),     'fas fa-tshirt',      '#1F9956','дона «Тайёр» босқичида')}
+    ${mc('Брак',           N(d.scrap_qty,1),        'fas fa-times-circle','#C23B55')}
+  </div>`;
+
+  // Material issued by production stage
+  const issued = d.issued_by_stage || {};
+  const issuedTotals = d.issued_total_by_stage || {};
+  const stageOrder = ['cutting','sorting','sewing','cleaning','ironing','control','packing','finished','unknown'];
+  const usedStages = stageOrder.filter(s => issued[s]?.length);
+
+  if(usedStages.length){
+    const stageCards = usedStages.map(sk => {
+      const color = STAGE_COLORS[sk] || '#A8632A';
+      const label = STAGE_LABELS[sk] || sk;
+      const total = N(issuedTotals[sk] || 0, 2);
+      const rows = (issued[sk] || []).map(r =>
+        `<tr><td>${r.product_name}</td><td class="nr">${N(r.qty,2)} ${r.unit}</td></tr>`
+      ).join('');
+      return `
+        <div style="flex:1;min-width:180px;background:rgba(255,255,255,0.7);border-radius:12px;border:1px solid rgba(0,0,0,0.07);padding:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
+            <span style="font-weight:700;font-size:0.9rem;color:#1E4A54">${label}</span>
+            <span style="margin-left:auto;font-size:0.82rem;color:#888">${total}</span>
+          </div>
+          <table class="T" style="font-size:0.82rem">
+            <thead><tr><th>Материал</th><th style="text-align:right">Миқдор</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }).join('');
+    html += card('Босқичлар бўйича материал сарфи','fas fa-layer-group','#5B8BD0',
+      `<div style="display:flex;flex-wrap:wrap;gap:12px">${stageCards}</div>`);
+  } else {
+    html += card('Босқичлар бўйича материал сарфи','fas fa-layer-group','#5B8BD0',
+      '<div class="em"><i class="fas fa-box-open"></i><p>Ҳали материал олинмаган</p></div>');
+  }
+
+  if(d.by_location?.length){
+    const mx=Math.max(...d.by_location.map(l=>l.qty),1);
+    const rows=d.by_location.map(l=>`<div class="pl-r">
+      <div class="pl-dot" style="background:#A8632A"></div>
+      <div class="pl-nm">${l.location}</div>
+      <div class="pl-bw"><div class="pl-bf" style="width:${(l.qty/mx*100).toFixed(1)}%;background:linear-gradient(90deg,#A8632A,#D4A070)"></div></div>
+      <div class="pl-qty">${N(l.qty,1)}</div>
+    </div>`).join('');
+    html += card('Жойлар бўйича қолдиқлар','fas fa-map-marker-alt','#A8632A',`<div class="PL">${rows}</div>`);
+  }
+
+  if(d.finished_items?.length){
+    const rows=d.finished_items.map(it=>{
+      const gb=it.grade===null||it.grade===''?bdg('Навсиз','Bb'):it.grade==='1'?bdg('1-нав','Bg'):it.grade==='1.5'?bdg('1-нав.5','Ba'):bdg('2-нав','Br');
+      return `<tr><td><b>${it.color}</b></td><td>${it.size}</td><td>${gb}</td><td class="nr">${N(it.qty)}</td></tr>`;
+    }).join('');
+    html += card(`Тайёр буюмлар — ${N(d.finished_total)} дона`,'fas fa-check-circle','#1E4A54',
+      `<table class="T"><thead><tr><th>Ранг</th><th>Ўлчам</th><th>Нав</th><th style="text-align:right">Миқдор</th></tr></thead><tbody>${rows}</tbody></table>`);
+  } else {
+    html += card('Тайёр буюмлар','fas fa-check-circle','#1E4A54','<div class="em"><i class="fas fa-box-open"></i><p>Тайёр буюмлар йўқ</p></div>');
+  }
+
+  document.getElementById('cWh').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════
+   PRELOAD BADGES
+═══════════════════════════════════════════════ */
+async function preload(){
+  try{
+    const [o,p,s,f,w] = await Promise.allSettled([
+      api('/api/stats/orders'+qs()),
+      api('/api/stats/production'+qs()),
+      api('/api/stats/services'+qs()),
+      api('/api/stats/finance'+qs()),
+      api('/api/stats/warehouse'+qs()),
+    ]);
+    if(o.status==='fulfilled'){
+      const v=o.value;
+      document.getElementById('bv-orders').textContent=v.total;
+      document.getElementById('bt-orders').innerHTML=`<span class="bbtag">${v.active} фаол</span><span class="bbtag">${v.done} ёпилган</span>`;
+      document.getElementById('bb-orders').classList.add('rdy');
+    }
+    if(p.status==='fulfilled'){
+      const v=p.value, tot=Object.values(v.by_stage||{}).reduce((a,b)=>a+b,0);
+      document.getElementById('bv-prod').textContent=tot+' дона';
+      document.getElementById('bt-prod').innerHTML=`<span class="bbtag">${N(v.finished)} тайёр</span><span class="bbtag">${N(v.scrap)} брак</span>`;
+      document.getElementById('bb-prod').classList.add('rdy');
+    }
+    if(s.status==='fulfilled'){
+      const v=s.value;
+      document.getElementById('bv-svc').textContent=v.total;
+      document.getElementById('bt-svc').innerHTML=`<span class="bbtag">${v.active} фаол</span>`;
+      document.getElementById('bb-svc').classList.add('rdy');
+    }
+    if(f.status==='fulfilled'){
+      const v=f.value, ps=v.profit>=0?'+':'';
+      document.getElementById('bv-fin').textContent=SH(v.balance?.total||0);
+      document.getElementById('bt-fin').innerHTML=`<span class="bbtag">${ps}${SH(v.profit)} жами</span>`;
+      document.getElementById('bb-fin').classList.add('rdy');
+    }
+    if(w.status==='fulfilled'){
+      const v=w.value;
+      document.getElementById('bv-wh').textContent=v.total_products+' номенк.';
+      document.getElementById('bt-wh').innerHTML=`<span class="bbtag">${N(v.finished_total)} тайёр</span>`;
+      document.getElementById('bb-wh').classList.add('rdy');
+    }
+    updTS();
+  }catch(e){}
+}
+
+/* INIT */
+preload();
+startAuto();
+</script>
+{% endblock %}

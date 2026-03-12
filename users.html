@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+{% block title %}Фойдаланувчилар{% endblock %}
+{% block brand_subtitle %}Фойдаланувчиларни бошқариш{% endblock %}
+
+{% block nav_items %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --border: rgba(30,74,84,.12); }
+
+  .page-header { margin-bottom: 26px; }
+  .page-header h2 { font-size: 28px; font-weight: 900; color: var(--deep); margin-bottom: 4px; }
+  .page-header p  { font-size: 14px; color: var(--text-light); }
+
+  /* Role badge */
+  .role-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 11px; border-radius: 50px;
+    font-size: 12px; font-weight: 700; white-space: nowrap;
+  }
+  .rb-Администратор    { background:rgba(231,76,60,.1);  color:#c0392b; border:1px solid rgba(231,76,60,.25); }
+  .rb-Директор         { background:rgba(142,68,173,.1); color:#7d3c98; border:1px solid rgba(142,68,173,.25); }
+  .rb-Менеджер         { background:rgba(52,152,219,.1); color:#2874a6; border:1px solid rgba(52,152,219,.25); }
+  .rb-Бухгалтер        { background:rgba(39,174,96,.1);  color:#1e8449; border:1px solid rgba(39,174,96,.25); }
+  .rb-Мастер-раскроя   { background:rgba(230,126,34,.1); color:#a04000; border:1px solid rgba(230,126,34,.25); }
+  .rb-Мастер-пошива    { background:rgba(230,126,34,.1); color:#a04000; border:1px solid rgba(230,126,34,.25); }
+  .rb-Мастер-упаковки  { background:rgba(230,126,34,.1); color:#a04000; border:1px solid rgba(230,126,34,.25); }
+  .rb-Складчик         { background:rgba(42,167,161,.1); color:#1a7a75; border:1px solid rgba(42,167,161,.25); }
+
+  /* Stats */
+  .stats-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .stat-pill {
+    padding:6px 13px; border-radius:50px;
+    background:var(--glass); border:1px solid var(--border);
+    font-size:12px; font-weight:600; color:var(--text);
+    backdrop-filter:blur(14px); display:flex; align-items:center; gap:6px;
+  }
+  .stat-pill i { color:var(--accent); font-size:9px; }
+
+  /* Add section */
+  .add-section {
+    background:var(--glass); border:2px dashed rgba(42,167,161,.3);
+    border-radius:18px; padding:24px; margin-bottom:24px;
+    backdrop-filter:blur(14px);
+  }
+  .add-section h3 { font-size:16px; font-weight:700; color:var(--deep); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .add-section h3 i { color:var(--accent); }
+  .add-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+
+  /* Users grid */
+  .users-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:16px; }
+
+  .user-card {
+    background:var(--glass); border:1px solid var(--border);
+    border-radius:18px; box-shadow:var(--shadow-soft);
+    backdrop-filter:blur(14px); padding:20px; transition:var(--t);
+  }
+  .user-card:hover { transform:translateY(-3px); box-shadow:0 20px 50px rgba(30,74,84,.12); }
+
+  .card-head { display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; }
+  .avatar {
+    width:46px; height:46px; border-radius:13px; flex-shrink:0;
+    background:var(--gradient-primary); display:flex; align-items:center; justify-content:center;
+    font-size:18px; color:white; box-shadow:0 6px 16px rgba(42,167,161,.2);
+  }
+  .user-info { flex:1; min-width:0; }
+  .u-name { font-size:15px; font-weight:700; color:var(--deep); margin-bottom:3px; word-break:break-word; }
+  .u-code { font-size:12px; color:var(--text-light); display:flex; align-items:center; gap:4px; }
+
+  .card-btns { display:flex; gap:5px; flex-shrink:0; }
+  .ic-btn {
+    width:32px; height:32px; border-radius:9px;
+    border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:var(--t); font-size:12px;
+    background:rgba(255,255,255,.6); color:var(--text-light);
+  }
+  .ic-btn.edit:hover   { background:rgba(42,167,161,.1);  color:var(--accent); border-color:rgba(42,167,161,.3); }
+  .ic-btn.del:hover    { background:rgba(231,76,60,.08); color:#e74c3c; border-color:rgba(231,76,60,.3); }
+
+  .card-meta {
+    display:flex; flex-direction:column; gap:5px;
+    margin-top:10px; padding-top:10px; border-top:1px solid var(--border);
+    font-size:12px; color:var(--text-light);
+  }
+  .card-meta span { display:flex; align-items:center; gap:4px; }
+  .card-meta i { color:var(--accent); width:12px; }
+
+  /* Forms */
+  .fg { margin-bottom:0; }
+  .fl { display:flex; align-items:center; gap:6px; font-weight:600; color:var(--text); font-size:13px; margin-bottom:6px; }
+  .fl i { color:var(--accent); }
+  .fi, .fs {
+    width:100%; padding:10px 13px;
+    border-radius:12px; border:1.5px solid var(--border);
+    background:rgba(255,255,255,.9); font-size:14px; color:var(--text);
+    transition:var(--t); font-family:inherit;
+  }
+  .fi:focus, .fs:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(42,167,161,.12); }
+
+  .rdot-wrap { position:relative; }
+  .rdot { position:absolute; left:11px; top:50%; transform:translateY(-50%); width:9px; height:9px; border-radius:50%; background:#aaa; pointer-events:none; transition:background .2s; }
+  .rdot-wrap .fs { padding-left:28px; }
+
+  /* Buttons */
+  .btn {
+    padding:10px 16px; border-radius:12px; border:none;
+    font-weight:700; font-size:14px; cursor:pointer; transition:var(--t);
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-p { background:var(--gradient-primary); color:white; box-shadow:0 6px 18px rgba(42,167,161,.25); }
+  .btn-p:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(42,167,161,.35); }
+  .btn-s { background:rgba(255,255,255,.9); border:1.5px solid var(--border); color:var(--text); }
+  .btn-s:hover { background:white; transform:translateY(-2px); }
+  .btn-d { background:#e74c3c; color:white; }
+  .btn-d:hover { background:#c0392b; transform:translateY(-2px); }
+
+  /* Modal */
+  .mo {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.45); backdrop-filter:blur(5px);
+    z-index:1000; align-items:center; justify-content:center; padding:20px;
+  }
+  .mo.on { display:flex; }
+  .mb {
+    background:white; border-radius:20px; width:100%; max-width:440px;
+    max-height:90vh; overflow-y:auto;
+    box-shadow:0 40px 100px rgba(30,74,84,.2); animation:mIn .25s ease;
+  }
+  @keyframes mIn { from{opacity:0;transform:scale(.95) translateY(14px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .mh { padding:24px 26px 0; display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .mh h3 { font-size:19px; font-weight:800; color:var(--deep); }
+  .mc { background:none; border:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:var(--text-light); transition:var(--t); }
+  .mc:hover { background:rgba(231,76,60,.1); color:#e74c3c; }
+  .mbody { padding:0 26px 26px; }
+  .mfg { margin-bottom:14px; }
+  .macts { display:flex; gap:10px; margin-top:20px; }
+  .macts .btn { flex:1; }
+
+  /* Confirm */
+  .cb {
+    background:white; border-radius:20px; width:100%; max-width:380px;
+    box-shadow:0 40px 100px rgba(30,74,84,.2); animation:mIn .25s ease; padding:28px;
+    text-align:center;
+  }
+  .ci { font-size:44px; margin-bottom:12px; }
+  .ct { font-size:19px; font-weight:800; color:var(--deep); margin-bottom:7px; }
+  .cd { font-size:14px; color:var(--text-light); margin-bottom:22px; line-height:1.5; }
+  .ca { display:flex; gap:10px; }
+  .ca .btn { flex:1; }
+
+  /* Flash */
+  .flist { list-style:none; margin-bottom:16px; }
+  .fmsg { padding:11px 15px; border-radius:12px; font-weight:600; margin-bottom:7px; display:flex; align-items:center; gap:8px; font-size:13px; }
+  .fs-success { background:rgba(39,174,96,.1); color:#1e8449; border:1px solid rgba(39,174,96,.3); }
+  .fs-error   { background:rgba(231,76,60,.1); color:#c0392b; border:1px solid rgba(231,76,60,.3); }
+
+  @media(max-width:680px) {
+    .users-grid{ grid-template-columns:1fr }
+    .add-grid{ grid-template-columns:1fr }
+  }
+  @media(max-width:480px) {
+    .users-grid{ gap: 10px; }
+    .add-grid{ gap: 10px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-users-gear" style="color:var(--accent);margin-right:9px;"></i>Фойдаланувчилар</h2>
+  <p>Ходимлар, роллар ва кириш кодлари</p>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}
+  <ul class="flist">{% for cat, msg in messages %}
+    <li class="fmsg fs-{{ cat }}">
+      <i class="fas fa-{{ 'check-circle' if cat == 'success' else 'exclamation-circle' }}"></i>{{ msg }}
+    </li>{% endfor %}</ul>
+{% endif %}{% endwith %}
+
+<div class="stats-bar">
+  <div class="stat-pill"><i class="fas fa-users"></i> Жами: {{ users|length }}</div>
+  {% for r in valid_roles %}{% set n = users|selectattr('role','equalto',r)|list|length %}{% if n > 0 %}
+  <div class="stat-pill"><i class="fas fa-circle"></i> {{ r }}: {{ n }}</div>
+  {% endif %}{% endfor %}
+</div>
+
+<!-- Add user -->
+<div class="add-section">
+  <h3><i class="fas fa-user-plus"></i> Фойдаланувчи қўшиш</h3>
+  <form method="POST" action="/users/add">
+    <div class="add-grid">
+      <div class="fg">
+        <label class="fl"><i class="fas fa-user"></i> Исм *</label>
+        <input type="text" name="username" class="fi" placeholder="Ном киритинг" required data-no-numpad>
+      </div>
+      <div class="fg">
+        <label class="fl"><i class="fas fa-key"></i> Код (4 рақам) *</label>
+        <input type="text" name="access_code" class="fi" placeholder="0000" maxlength="4" pattern="\d{4}" required data-no-numpad>
+      </div>
+      <div class="fg">
+        <label class="fl"><i class="fas fa-id-badge"></i> Рол *</label>
+        <div class="rdot-wrap">
+          <div class="rdot" id="addDot"></div>
+          <select name="role" class="fs" id="addSel" required>
+            <option value="">— ролни танланг —</option>
+            {% for r in valid_roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="display:flex;align-items:flex-end;">
+        <button type="submit" class="btn btn-p" style="width:100%"><i class="fas fa-plus"></i> Қўшиш</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Users grid -->
+<div class="users-grid">
+  {% for u in users %}
+  {% set rk = u.role.split(' ')[0] if ' ' in u.role else u.role %}
+  <div class="user-card">
+    <div class="card-head">
+      <div class="avatar">
+        <i class="fas fa-{{ 'crown' if u.role in ['Администратор','Директор'] else
+          'calculator' if u.role=='Бухгалтер' else
+          'cut' if u.role=='Мастер раскроя' else
+          'scissors' if u.role=='Мастер пошива' else
+          'box' if u.role=='Мастер упаковки' else
+          'boxes-stacked' if u.role=='Складчик' else 'user-tie' }}"></i>
+      </div>
+      <div class="user-info">
+        <div class="u-name">{{ u.username }}</div>
+        <div class="u-code"><i class="fas fa-key"></i> {{ u.access_code }}</div>
+      </div>
+      <div class="card-btns">
+        <button class="ic-btn edit" title="Таҳрирлаш"
+          data-id="{{ u.id }}"
+          data-name="{{ u.username|e }}"
+          data-code="{{ u.access_code }}"
+          data-role="{{ u.role|e }}"
+          onclick="openEditFromBtn(this)">
+          <i class="fas fa-pen"></i>
+        </button>
+        {% if u.id != current_user_id %}
+        <button class="ic-btn del" title="Ўчириш"
+          data-id="{{ u.id }}"
+          data-name="{{ u.username|e }}"
+          onclick="openDelFromBtn(this)">
+          <i class="fas fa-trash"></i>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <span class="role-badge rb-{{ u.role | replace(' ', '-') }}">
+      <i class="fas fa-circle" style="font-size:7px;"></i> {{ u.role }}
+    </span>
+
+    <div class="card-meta">
+      {% if u.created_at %}<span><i class="fas fa-calendar-plus"></i> {{ u.created_at[:10] }}</span>{% endif %}
+      <span><i class="fas fa-clock"></i>
+        {% if u.last_login %}{{ u.last_login[:16].replace('T',' ') }}{% else %}Ҳали кирмаган{% endif %}
+      </span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Edit modal -->
+<div class="mo" id="editMo">
+  <div class="mb">
+    <div class="mh">
+      <h3><i class="fas fa-pen" style="color:var(--accent);margin-right:7px;"></i>Таҳрирлаш</h3>
+      <button class="mc" onclick="closeEdit()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="mbody">
+      <div class="mfg">
+        <label class="fl"><i class="fas fa-user"></i> Исм</label>
+        <input type="text" class="fi" id="eUsername" data-no-numpad>
+      </div>
+      <div class="mfg">
+        <label class="fl"><i class="fas fa-key"></i> Код (4 рақам)</label>
+        <input type="text" class="fi" id="eCode" maxlength="4" data-no-numpad>
+      </div>
+      <div class="mfg">
+        <label class="fl"><i class="fas fa-id-badge"></i> Рол</label>
+        <div class="rdot-wrap">
+          <div class="rdot" id="eDot"></div>
+          <select class="fs" id="eRole">
+            {% for r in valid_roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="macts">
+        <button class="btn btn-s" onclick="closeEdit()"><i class="fas fa-times"></i> Бекор қилиш</button>
+        <button class="btn btn-p" id="eSaveBtn" onclick="submitEdit()"><i class="fas fa-save"></i> Сақлаш</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="mo" id="delMo">
+  <div class="cb">
+    <div class="ci">🗑️</div>
+    <div class="ct">Фойдаланувчини ўчириш?</div>
+    <div class="cd" id="delText">Бу амални бекор қилиб бўлмайди.</div>
+    <div class="ca">
+      <button class="btn btn-s" onclick="closeDel()"><i class="fas fa-times"></i> Бекор қилиш</button>
+      <button class="btn btn-d" id="delBtn"><i class="fas fa-trash"></i> Ўчириш</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ROLE_COLORS = {
+  'Администратор':'#c0392b','Директор':'#7d3c98','Менеджер':'#2874a6',
+  'Бухгалтер':'#1e8449','Мастер раскроя':'#a04000','Мастер пошива':'#a04000',
+  'Мастер упаковки':'#a04000','Складчик':'#1a7a75'
+};
+function setDot(sel,dot){ dot.style.background = ROLE_COLORS[sel.value]||'#aaa'; }
+
+const addSel = document.getElementById('addSel');
+const addDot = document.getElementById('addDot');
+addSel?.addEventListener('change', ()=>setDot(addSel,addDot));
+
+const eSel = document.getElementById('eRole');
+const eDot = document.getElementById('eDot');
+eSel?.addEventListener('change', ()=>setDot(eSel,eDot));
+
+// ---- Edit ----
+let editId = null;
+function openEditFromBtn(btn){
+  openEdit(
+    parseInt(btn.dataset.id),
+    btn.dataset.name,
+    btn.dataset.code,
+    btn.dataset.role
+  );
+}
+function openEdit(id,name,code,role){
+  editId=id;
+  document.getElementById('eUsername').value=name;
+  document.getElementById('eCode').value=code;
+  eSel.value=role; setDot(eSel,eDot);
+  document.getElementById('editMo').classList.add('on');
+}
+function closeEdit(){ document.getElementById('editMo').classList.remove('on'); }
+document.getElementById('editMo')?.addEventListener('click',e=>{ if(e.target===document.getElementById('editMo')) closeEdit(); });
+
+async function submitEdit(){
+  const btn=document.getElementById('eSaveBtn');
+  const name=document.getElementById('eUsername').value.trim();
+  const code=document.getElementById('eCode').value.trim();
+  const role=eSel.value;
+  if(!name||code.length!==4||!/^\d+$/.test(code)||!role){ toast('Барча майдонларни тўғри тўлдиринг','err'); return; }
+  const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  try{
+    const r=await fetch('/api/update-user',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({user_id:editId,username:name,access_code:code,role})});
+    const d=await r.json();
+    if(d.success){ toast('Сақланди','ok'); setTimeout(()=>location.reload(),700); }
+    else toast(d.message||'Хатолик','err');
+  }catch{ toast('Tarmoq xatoligi','err'); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
+}
+
+// ---- Delete ----
+let delId=null;
+function openDelFromBtn(btn){
+  openDel(parseInt(btn.dataset.id), btn.dataset.name);
+}
+function openDel(id,name){
+  delId=id;
+  document.getElementById('delText').textContent=`Сиз «${name}» фойдаланувчисini ўчиришni xohlaysizmi?`;
+  document.getElementById('delMo').classList.add('on');
+}
+function closeDel(){ document.getElementById('delMo').classList.remove('on'); delId=null; }
+document.getElementById('delMo')?.addEventListener('click',e=>{ if(e.target===document.getElementById('delMo')) closeDel(); });
+
+document.getElementById('delBtn')?.addEventListener('click', async function(){
+  if(!delId) return;
+  const btn=this; const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  try{
+    const r=await fetch(`/api/users/${delId}/delete`,{method:'POST'});
+    const d=await r.json();
+    if(d.success){ toast(d.message||'Ўчирилди','ok'); setTimeout(()=>location.reload(),700); }
+    else{ toast(d.message||'Хатолик','err'); closeDel(); }
+  }catch{ toast('Tarmoq xatoligi','err'); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
+});
+
+// ---- Toast ----
+function toast(msg,type){
+  document.querySelector('.t-toast')?.remove();
+  const el=document.createElement('div'); el.className='t-toast';
+  const ok=type==='ok';
+  el.innerHTML=`<i class="fas fa-${ok?'check-circle':'exclamation-circle'}"></i>${msg}`;
+  Object.assign(el.style,{
+    position:'fixed',top:'20px',right:'20px',padding:'12px 17px',
+    borderRadius:'12px',fontWeight:'600',display:'flex',alignItems:'center',gap:'8px',
+    backdropFilter:'blur(14px)',zIndex:'2000',animation:'sIn .3s ease-out',
+    boxShadow:'0 16px 40px rgba(30,74,84,.15)',fontSize:'13px',
+    background: ok?'rgba(39,174,96,.12)':'rgba(231,76,60,.12)',
+    border:`1px solid ${ok?'rgba(39,174,96,.3)':'rgba(231,76,60,.3)'}`,
+    color: ok?'#1e8449':'#c0392b'
+  });
+  document.body.appendChild(el);
+  setTimeout(()=>{ el.style.animation='sOut .3s forwards'; setTimeout(()=>el.remove(),300); },3000);
+}
+</script>
+<style>
+@keyframes sIn  { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes sOut { from{transform:translateX(0);opacity:1} to{transform:translateX(110%);opacity:0} }
+</style>
+{% endblock %}

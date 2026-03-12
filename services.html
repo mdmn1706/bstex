@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Хизматлар (ташқи ишлаб чиқариш)</title>
+
+  <style>
+    :root{
+      --bg: #F8F5F0;
+      --ink: #2C3E50;
+      --muted: #697777;
+
+      --deep: #1E4A54;
+      --aqua: #2AA7A1;
+      --sand: #D4A574;
+      --sand2: #E8C39E;
+
+      --glass: rgba(255,255,255,.62);
+      --glass2: rgba(255,255,255,.42);
+      --stroke: rgba(30,74,84,.12);
+
+      --shadow1: 0 25px 60px rgba(30, 74, 84, 0.08);
+      --shadow2: 0 10px 22px rgba(30, 74, 84, 0.10);
+
+      --r-lg: 22px;
+      --r-md: 16px;
+      --r-sm: 12px;
+
+      --ease: cubic-bezier(.2,.8,.2,1);
+      --t: all .2s ease;
+
+      --btn: linear-gradient(135deg, #2AA7A1 0%, #1E4A54 100%);
+      --warm: linear-gradient(135deg, #D4A574 0%, #E8C39E 100%);
+      --danger: linear-gradient(135deg, #E35D6A 0%, #8A1F2A 100%);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 700px at 20% 15%, rgba(42,167,161,.16), transparent 60%),
+        radial-gradient(900px 600px at 85% 25%, rgba(212,165,116,.18), transparent 55%),
+        radial-gradient(900px 700px at 35% 90%, rgba(30,74,84,.12), transparent 60%),
+        linear-gradient(180deg, #FBFAF7 0%, var(--bg) 100%);
+      overflow-x:hidden;
+    }
+
+    /* Fabric / thread overlay */
+    .threads{
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:.55;
+      background:
+        repeating-linear-gradient(
+          110deg,
+          rgba(30,74,84,.05) 0px,
+          rgba(30,74,84,.05) 1px,
+          transparent 1px,
+          transparent 14px
+        ),
+        repeating-linear-gradient(
+          20deg,
+          rgba(42,167,161,.04) 0px,
+          rgba(42,167,161,.04) 1px,
+          transparent 1px,
+          transparent 18px
+        );
+      mask-image: radial-gradient(closest-side at 50% 35%, rgba(0,0,0,.85), rgba(0,0,0,.25) 60%, transparent 90%);
+      animation: thread-float 16s linear infinite;
+      transform: translateZ(0);
+    }
+
+    @keyframes thread-float{
+      0%{ transform: translate3d(0,-18px,0); filter: hue-rotate(0deg); }
+      50%{ transform: translate3d(0,12px,0); filter: hue-rotate(6deg); }
+      100%{ transform: translate3d(0,-18px,0); filter: hue-rotate(0deg); }
+    }
+
+    .blobs{
+      position:fixed; inset:0; pointer-events:none; overflow:hidden;
+      opacity:.9;
+    }
+    .blob{
+      position:absolute;
+      width:520px; height:520px;
+      border-radius: 48% 52% 45% 55% / 55% 45% 55% 45%;
+      filter: blur(28px);
+      background: radial-gradient(circle at 30% 30%, rgba(42,167,161,.30), rgba(30,74,84,.14) 45%, transparent 68%);
+      animation: floaty 18s var(--ease) infinite;
+      transform: translateZ(0);
+    }
+    .blob.b2{
+      width:620px; height:620px;
+      right:-220px; top:90px;
+      background: radial-gradient(circle at 35% 35%, rgba(212,165,116,.30), rgba(232,195,158,.18) 42%, transparent 70%);
+      animation-duration: 22s;
+    }
+    .blob.b1{ left:-220px; top:-140px; }
+    @keyframes floaty{
+      0%{ transform: translate3d(0,0,0) rotate(0deg); }
+      50%{ transform: translate3d(10px,18px,0) rotate(6deg); }
+      100%{ transform: translate3d(0,0,0) rotate(0deg); }
+    }
+
+    .page{
+      width:min(1280px, calc(100% - 40px));
+      margin: 28px auto 60px;
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 16px 18px;
+      border-radius: var(--r-lg);
+      background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.52));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow1);
+      backdrop-filter: blur(14px);
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      min-width: 240px;
+    }
+    .mark{
+      width:44px; height:44px;
+      border-radius: 14px;
+      background: var(--btn);
+      box-shadow: 0 16px 30px rgba(30,74,84,.16);
+      position:relative;
+      overflow:hidden;
+    }
+    .mark::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.55) 45%, transparent 70%);
+      transform: rotate(18deg) translateX(-40%);
+      animation: sheen 2.6s var(--ease) infinite;
+    }
+    @keyframes sheen{
+      0%{ transform: rotate(18deg) translateX(-55%); opacity:.0; }
+      20%{ opacity:.8; }
+      55%{ opacity:.35; }
+      100%{ transform: rotate(18deg) translateX(55%); opacity:0; }
+    }
+    .brand h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.2px;
+      line-height:1.15;
+    }
+    .brand .sub{
+      font-size: 12px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    .tabs{
+      display:flex; align-items:center; gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .tab{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.48);
+      color: var(--deep);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: var(--t);
+      position:relative;
+      overflow:hidden;
+      font-weight: 650;
+      letter-spacing:.2px;
+    }
+    .tab:hover{ transform: translateY(-1px); box-shadow: var(--shadow2); }
+    .tab[aria-selected="true"]{
+      background: var(--btn);
+      color: white;
+      border-color: rgba(255,255,255,.22);
+    }
+
+    .grid{
+      margin-top: 16px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+      align-items:start;
+    }
+
+    .card{
+      border-radius: var(--r-lg);
+      background: linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,.48));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow1);
+      backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .card .hd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(30,74,84,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.56), rgba(255,255,255,.35));
+    }
+    .card .hd .title{
+      display:flex; align-items:center; gap:10px;
+      min-width: 0;
+    }
+    .card .bd{ padding: 16px; }
+
+    .pill{
+      font-size:12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(30,74,84,.14);
+      background: rgba(255,255,255,.55);
+      color: var(--deep);
+      white-space:nowrap;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(42,167,161,.10);
+      color: var(--deep);
+      border: 1px solid rgba(42,167,161,.22);
+      font-size: 12px;
+      font-weight: 650;
+      white-space:nowrap;
+    }
+    .badge{
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(212,165,116,.16);
+      border: 1px solid rgba(212,165,116,.28);
+      color: #5A3D14;
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+    .badge.ok{
+      background: rgba(42,167,161,.14);
+      border-color: rgba(42,167,161,.28);
+      color: var(--deep);
+    }
+    .badge.dim{
+      background: rgba(105,119,119,.12);
+      border-color: rgba(105,119,119,.18);
+      color: #4a5b5b;
+    }
+    .muted{ color: var(--muted); }
+    .hint{ font-size:12px; color:var(--muted); line-height:1.45; }
+
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .field{ display:flex; flex-direction:column; gap:7px; }
+    .field label{
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing:.2px;
+    }
+    .input, .select, .textarea{
+      width:100%;
+      border-radius: 14px;
+      border: 1px solid rgba(30,74,84,.14);
+      background: rgba(255,255,255,.60);
+      outline: none;
+      padding: 11px 12px;
+      color: var(--ink);
+      transition: var(--t);
+      box-shadow: 0 0 0 rgba(42,167,161,0);
+    }
+    .textarea{ min-height: 92px; resize: vertical; }
+    .input:focus, .select:focus, .textarea:focus{
+      border-color: rgba(42,167,161,.55);
+      box-shadow: 0 0 0 4px rgba(42,167,161,.14);
+      background: rgba(255,255,255,.78);
+    }
+    .span-2{ grid-column: 1 / -1; }
+
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+      margin-top: 10px;
+    }
+
+    .btn{
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 14px;
+      cursor:pointer;
+      transition: var(--t);
+      font-weight: 800;
+      letter-spacing:.2px;
+      position:relative;
+      overflow:hidden;
+    }
+    .btn-primary{ color:#fff; background: var(--btn); box-shadow: 0 14px 30px rgba(30,74,84,.16); }
+    .btn-warm{ color:#2b2b2b; background: var(--warm); box-shadow: 0 14px 30px rgba(212,165,116,.18); }
+    .btn-ghost{
+      color: var(--deep);
+      background: rgba(255,255,255,.46);
+      border: 1px solid rgba(30,74,84,.14);
+    }
+    .btn-danger{ color:#fff; background: var(--danger); box-shadow: 0 14px 30px rgba(138,31,42,.16); }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 22px 40px rgba(30,74,84,.12); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    .btn::after{
+      content:"";
+      position:absolute; inset:-60% -40%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.40) 45%, transparent 70%);
+      transform: rotate(18deg) translateX(-55%);
+      opacity:0;
+    }
+    .btn:hover::after{ animation: sheen 1.15s var(--ease) 1; opacity:1; }
+
+    .table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow:hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(30,74,84,.12);
+      background: rgba(255,255,255,.55);
+    }
+    .table th, .table td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(30,74,84,.08);
+      font-size: 13px;
+      text-align:left;
+      vertical-align: middle;
+    }
+    .table th{
+      color: var(--deep);
+      font-size: 12px;
+      letter-spacing:.25px;
+      background: linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.40));
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+    .table tr:last-child td{ border-bottom:0; }
+    .table .num{ width: 160px; }
+    .table .tiny{ width: 120px; }
+
+    .mini-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .iconbtn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(30,74,84,.14);
+      background: rgba(255,255,255,.52);
+      cursor:pointer;
+      transition: var(--t);
+      color: var(--deep);
+      font-weight: 850;
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .iconbtn:hover{ transform: translateY(-1px); box-shadow: var(--shadow2); background: rgba(255,255,255,.70); }
+
+    .service-list{ display:flex; flex-direction:column; gap:10px; }
+    .service-item{
+      border-radius: 18px;
+      padding: 12px 12px;
+      border: 1px solid rgba(30,74,84,.12);
+      background: rgba(255,255,255,.55);
+      cursor:pointer;
+      transition: var(--t);
+      position:relative;
+      overflow:hidden;
+    }
+    .service-item:hover{ transform: translateY(-1px); box-shadow: var(--shadow2); background: rgba(255,255,255,.72); }
+    .service-item.active{
+      border-color: rgba(42,167,161,.45);
+      background: linear-gradient(180deg, rgba(42,167,161,.10), rgba(255,255,255,.62));
+    }
+    .service-item .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .service-item .code{ font-weight: 950; letter-spacing: .25px; color: var(--deep); line-height: 1.1; }
+    .service-item .meta{ margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; color: var(--muted); font-size: 12px; }
+
+    details.action{
+      border-radius: 16px;
+      border: 1px solid rgba(30,74,84,.10);
+      background: rgba(255,255,255,.55);
+      overflow:hidden;
+      margin-bottom: 10px;
+    }
+    details.action:last-child{ margin-bottom:0; }
+    details.action summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-weight: 950;
+      color: var(--deep);
+      transition: var(--t);
+    }
+    details.action summary::-webkit-details-marker{ display:none; }
+    details.action[open] summary{
+      background: linear-gradient(135deg, rgba(42,167,161,.10), rgba(255,255,255,.60));
+      border-bottom: 1px solid rgba(30,74,84,.08);
+    }
+    .summary-right{
+      display:flex; align-items:center; gap:8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      text-align:right;
+    }
+    .inside{ padding: 12px; }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .tile{
+      border-radius: 18px;
+      border: 1px solid rgba(30,74,84,.10);
+      background: rgba(255,255,255,.54);
+      padding: 12px 12px;
+    }
+    .tile .t{ font-size: 12px; color: var(--muted); }
+    .tile .v{ font-size: 16px; font-weight: 950; color: var(--deep); margin-top: 4px; }
+
+    [data-panel]{ display:none; }
+    [data-panel].show{ display:block; animation: pop .22s var(--ease) both; }
+    @keyframes pop{
+      from{ opacity: 0; transform: translateY(8px) scale(.99); }
+      to{ opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .tabs{ justify-content:flex-start; }
+    }
+    @media (max-width: 560px){
+      .form{ grid-template-columns: 1fr; }
+      .brand{ min-width: 0; }
+      .kpi{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="threads"></div>
+  <div class="blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+  </div>
+
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <h1>Хизматлар</h1>
+          <div class="sub">Ташқи ишлаб чиқариш · Топшириш · Қабул · Тўлов · Ёпиш</div>
+        </div>
+      </div>
+
+      <nav class="tabs" role="tablist" aria-label="Хизмат блоклари">
+        <button class="tab" role="tab" aria-selected="true" data-tab="add">Хизмат қўшиш</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="transfer">Топшириш</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="receive">Қабул</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="pay">Тўлов</button>
+      </nav>
+    </header>
+
+    <!-- LEFT/RIGHT layout -->
+    <section class="grid">
+
+      <!-- LEFT: actions -->
+      <section class="card">
+        <div class="hd">
+          <div class="title">
+            <strong>Операциялар</strong>
+            <span class="pill">блоклар бўйича</span>
+          </div>
+          {% if selected_service %}
+            <span class="chip">Танланди: #{{ selected_service.id }} · {{ selected_service.order_code }}</span>
+          {% else %}
+            <span class="badge dim">Танланмаган</span>
+          {% endif %}
+        </div>
+
+        <div class="bd">
+
+          <!-- PANEL: ADD -->
+          <section data-panel="add" class="show">
+            <details class="action" open>
+              <summary>
+                1) Хизмат қўшиш
+                <span class="summary-right">
+                  <span class="badge ok">яратиш</span>
+                  <span class="muted">ҳолат: черновик</span>
+                </span>
+              </summary>
+              <div class="inside">
+
+                <form class="form" method="post" action="{{ url_for('services_create') }}" id="serviceCreateForm">
+                  <div class="field span-2">
+                    <label>Буюртма</label>
+                    <select class="select" name="order_id" required>
+                      <option value="">— Буюртмани танланг —</option>
+                      {% for o in orders %}
+                        <option value="{{ o.id }}">{{ o.order_code }} · {{ o.client }} · {{ o.model }} ({{ o.qty }})</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label>Ижрочи (режим)</label>
+                    <select class="select" name="factory_mode" id="factoryMode">
+                      <option value="select" selected>Рўйхатдан танлаш</option>
+                      <option value="manual">Қўлда киритиш</option>
+                    </select>
+                  </div>
+
+                  <div class="field" id="factorySelectWrap">
+                    <label>Фабрика (рўйхатдан)</label>
+                    <select class="select" name="factory_id">
+                      <option value="">— Фабрикани танланг —</option>
+                      {% for f in factories %}
+                        <option value="{{ f.id }}">{{ f.name }}</option>
+                      {% endfor %}
+                    </select>
+                    <div class="hint" style="margin-top:6px;">Рўйхат йўқ бўлса — қўлда киришга ўтинг.</div>
+                  </div>
+
+                  <div class="field span-2" id="factoryManualWrap" style="display:none;">
+                    <label>Фабрика (қўлда)</label>
+                    <input class="input" name="factory_name" placeholder="Мас: Textile Partner LLC" />
+                  </div>
+
+                  <div class="field">
+                    <label>Иш тури</label>
+                    <select class="select" name="work_type" required>
+                      <option value="sewing">Тикиш → тайёр буюм</option>
+                      <option value="raw_to_product">Хом ашё → тайёр буюм</option>
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label>Топшириш санаси</label>
+                    <input class="input" type="date" name="transfer_date" required />
+                  </div>
+
+                  <div class="field">
+                    <label>Бирлик нархи</label>
+                    <input class="input" inputmode="numeric" name="unit_price" id="unitPrice" placeholder="Мас: 12000" required />
+                  </div>
+
+                  <div class="field">
+                    <label>Сумма (жами)</label>
+                    <input class="input" inputmode="numeric" name="total_amount" id="totalAmount" placeholder="Мас: 2400000" required />
+                    <div class="hint" style="margin-top:6px;">Омбор ҳали уланмаган, шунинг учун суммани қўлда киритамиз.</div>
+                  </div>
+
+                  <div class="field span-2">
+                    <label>Изоҳ</label>
+                    <textarea class="textarea" name="comment" placeholder="Муддатлар/шартлар/алоқа..."></textarea>
+                  </div>
+
+                  <div class="actions span-2">
+                    <a class="btn btn-ghost" href="{{ url_for('orders_page') }}">← Буюртмаларга</a>
+                    <button class="btn btn-primary" type="submit">Хизматни сақлаш</button>
+                  </div>
+                </form>
+
+              </div>
+            </details>
+
+            <div class="kpi">
+              <div class="tile">
+                <div class="t">Черновиклар</div>
+                <div class="v">{{ services_draft|length }}</div>
+              </div>
+              <div class="tile">
+                <div class="t">Тўлов кутмоқда</div>
+                <div class="v">{{ services_need_pay|length }}</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- PANEL: TRANSFER -->
+          <section data-panel="transfer">
+            <details class="action" {% if selected_service %}open{% endif %}>
+              <summary>
+                2) Хизматни топшириш
+                <span class="summary-right">
+                  <span class="badge">позицияларни фиксация</span>
+                  <span class="muted">омборсиз</span>
+                </span>
+              </summary>
+              <div class="inside">
+                {% if not selected_service %}
+                  <div class="hint">Ўнг томондаги рўйхатдан хизматни танланг. Сўнгра топшириш формаси пайдо бўлади.</div>
+                {% else %}
+                  <div class="hint">
+                    Хизмат: <strong>#{{ selected_service.id }}</strong>,
+                    Буюртма: <strong>{{ selected_service.order_code }}</strong>,
+                    Фабрика: <strong>{{ selected_service.factory_display }}</strong>,
+                    Ҳолат: <strong>{{ selected_service.status }}</strong>
+                  </div>
+
+                  <div style="height:10px"></div>
+
+                  <form method="post" action="{{ url_for('services_transfer', service_id=selected_service.id) }}">
+                    <div class="card" style="box-shadow:none; border-radius:18px;">
+                      <div class="hd">
+                        <div class="title">
+                          <strong>Топширилаётган товарлар/материаллар</strong>
+                          <span class="pill">сатрлар билан</span>
+                        </div>
+                        <div class="mini-actions">
+                          <button type="button" class="iconbtn" id="addTransferRow">+ Қатор қўшиш</button>
+                          <button type="button" class="iconbtn" id="clearTransferRows">Тозалаш</button>
+                        </div>
+                      </div>
+                      <div class="bd" style="padding-top:12px;">
+                        <table class="table" aria-label="Хизматга топшириш">
+                          <thead>
+                            <tr>
+                              <th>Товар</th>
+                              <th class="num">Миқдор</th>
+                              <th class="tiny">Ед.</th>
+                              <th class="tiny">Ўчириш</th>
+                            </tr>
+                          </thead>
+                          <tbody id="transferBody"></tbody>
+                        </table>
+                        <div class="hint" style="margin-top:10px;">
+                          Омбор ҳали йўқ — позицияни ном, миқдор ва бирлик (дона/кг/м/уп) билан киритамиз.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="actions">
+                      <a class="btn btn-ghost" href="{{ url_for('services_page') }}">Танловни тозалаш</a>
+                      <button class="btn btn-primary" type="submit">ОК · Топшириш</button>
+                    </div>
+                  </form>
+                {% endif %}
+              </div>
+            </details>
+          </section>
+
+          <!-- PANEL: RECEIVE -->
+          <section data-panel="receive">
+            <details class="action" {% if selected_service %}open{% endif %}>
+              <summary>
+                3) Хизматни қабул қилиш
+                <span class="summary-right">
+                  <span class="badge ok">натижа</span>
+                  <span class="muted">тайёр/қайтариш/брак</span>
+                </span>
+              </summary>
+              <div class="inside">
+                {% if not selected_service %}
+                  <div class="hint">Ўнг томондан хизматни танланг. Сўнгра қабул формаси пайдо бўлади.</div>
+                {% else %}
+                  <div class="hint">
+                    Хизмат: <strong>#{{ selected_service.id }}</strong>,
+                    Буюртма: <strong>{{ selected_service.order_code }}</strong>,
+                    Ҳолат: <strong>{{ selected_service.status }}</strong>
+                  </div>
+
+                  <div style="height:10px"></div>
+
+                  <form method="post" action="{{ url_for('services_receive', service_id=selected_service.id) }}">
+                    <!-- Returns -->
+                    <details class="action" open>
+                      <summary>
+                        A) Қайтариладиган товарлар
+                        <span class="summary-right">материаллар қайтарилса</span>
+                      </summary>
+                      <div class="inside">
+                        <div class="mini-actions" style="justify-content:flex-end;">
+                          <button type="button" class="iconbtn" id="addReturnRow">+ Қатор қўшиш</button>
+                          <button type="button" class="iconbtn" id="clearReturnRows">Тозалаш</button>
+                        </div>
+                        <div style="height:10px"></div>
+
+                        <table class="table" aria-label="Қайтариладиган товарлар">
+                          <thead>
+                            <tr>
+                              <th>Товар</th>
+                              <th class="num">Миқдор</th>
+                              <th class="tiny">Ед.</th>
+                              <th class="tiny">Ўчириш</th>
+                            </tr>
+                          </thead>
+                          <tbody id="returnsBody"></tbody>
+                        </table>
+                      </div>
+                    </details>
+
+                    <!-- Finished goods -->
+                    <details class="action" open>
+                      <summary>
+                        B) Тайёр буюм (ранг/ўлчам)
+                        <span class="summary-right">партиялар билан</span>
+                      </summary>
+                      <div class="inside">
+                        <div class="mini-actions" style="justify-content:flex-end;">
+                          <button type="button" class="iconbtn" id="addFgRow">+ Қатор қўшиш</button>
+                          <button type="button" class="iconbtn" id="clearFgRows">Тозалаш</button>
+                        </div>
+                        <div style="height:10px"></div>
+
+                        <table class="table" aria-label="Тайёр буюм">
+                          <thead>
+                            <tr>
+                              <th>Ранг</th>
+                              <th>Ўлчам</th>
+                              <th class="num">Миқдор</th>
+                              <th class="tiny">Ўчириш</th>
+                            </tr>
+                          </thead>
+                          <tbody id="fgBody"></tbody>
+                        </table>
+
+                        <div class="hint" style="margin-top:10px;">
+                          Сейчас это фиксируется в услуге. Позже подключим к этапу “Тайёр маҳсулот” заказа.
+                        </div>
+                      </div>
+                    </details>
+
+                    <!-- Defects -->
+                    <details class="action">
+                      <summary>
+                        C) Брак
+                        <span class="summary-right">миқдор + тур</span>
+                      </summary>
+                      <div class="inside">
+                        <div class="mini-actions" style="justify-content:flex-end;">
+                          <button type="button" class="iconbtn" id="addDefectRow">+ Қатор қўшиш</button>
+                          <button type="button" class="iconbtn" id="clearDefectRows">Тозалаш</button>
+                        </div>
+                        <div style="height:10px"></div>
+
+                        <table class="table" aria-label="Брак">
+                          <thead>
+                            <tr>
+                              <th>Брак тури</th>
+                              <th class="num">Сони</th>
+                              <th>Изоҳ</th>
+                              <th class="tiny">Ўчириш</th>
+                            </tr>
+                          </thead>
+                          <tbody id="defectsBody"></tbody>
+                        </table>
+                      </div>
+                    </details>
+
+                    <div class="actions">
+                      <button class="btn btn-primary" type="submit">ОК · Қабул қилиш</button>
+                    </div>
+                  </form>
+                {% endif %}
+              </div>
+            </details>
+          </section>
+
+          <!-- PANEL: PAY -->
+          <section data-panel="pay">
+            <details class="action" {% if selected_service %}open{% endif %}>
+              <summary>
+                4) Хизмат тўлови
+                <span class="summary-right">
+                  <span class="badge">нақд / ҳисоб</span>
+                  <span class="muted">харажатларга киради</span>
+                </span>
+              </summary>
+              <div class="inside">
+                {% if not selected_service %}
+                  <div class="hint">Ўнг томондан хизматни танланг. Сўнгра тўлов формаси ва ёпиш тугмаси пайдо бўлади.</div>
+                {% else %}
+                  <div class="kpi" style="margin-top:0;">
+                    <div class="tile">
+                      <div class="t">Хизмат суммаси</div>
+                      <div class="v">{{ selected_service.total_amount_fmt }}</div>
+                    </div>
+                    <div class="tile">
+                      <div class="t">Тўланди / Қолди</div>
+                      <div class="v">{{ selected_service.paid_total_fmt }} / {{ selected_service.remaining_fmt }}</div>
+                    </div>
+                  </div>
+
+                  <div style="height:12px"></div>
+
+                  <form class="form" method="post" action="{{ url_for('services_pay', service_id=selected_service.id) }}">
+                    <div class="field">
+                      <label>Тўлов усули</label>
+                      <select class="select" name="payment_type" required>
+                        {% for p in payment_types %}
+                          <option value="{{ p }}">{{ p }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <div class="field">
+                      <label>Сумма</label>
+                      <input class="input" name="amount" inputmode="numeric" placeholder="Мас: 500000" required />
+                    </div>
+
+                    <div class="field span-2">
+                      <label>Изоҳ</label>
+                      <textarea class="textarea" name="comment" placeholder="Ҳисоб/нақд тўлов, изоҳлар..."></textarea>
+                      <div class="hint" style="margin-top:6px;">
+                        После оплаты автоматически добавится строка в “Харажатлар” с привязкой к заказу и услуге.
+                      </div>
+                    </div>
+
+                    <div class="actions span-2">
+                      <button class="btn btn-primary" type="submit">ОК · Тўлов қўшиш</button>
+                    </div>
+                  </form>
+
+                  <div style="height:10px"></div>
+
+                  <form method="post" action="{{ url_for('services_close', service_id=selected_service.id) }}">
+                    <!-- UI: тугма фақат тўлов тўлиқ бўлганда фаол -->
+                    {% set can_close = (selected_service.remaining_fmt == "0") or ((selected_service.total_amount|int) == (selected_service.paid_total|int)) %}
+                    <div class="actions">
+                      <button class="btn btn-danger" type="submit" {% if not can_close %}disabled{% endif %}>
+                        Хизматни ёпиш
+                      </button>
+                      <span class="hint">
+                        Тугма фақат $$paid\_total = total\_amount$$ бўлганда фаол.
+                      </span>
+                    </div>
+                  </form>
+                {% endif %}
+              </div>
+            </details>
+          </section>
+
+        </div>
+      </section>
+
+      <!-- RIGHT: services list -->
+      <aside class="card">
+        <div class="hd">
+          <div class="title">
+            <strong>Хизматлар рўйхати</strong>
+            <span class="pill">танлаш</span>
+          </div>
+          <span class="badge ok">жонли маълумотлар</span>
+        </div>
+
+        <div class="bd">
+          <div class="hint" style="margin-bottom:12px;">
+            Хизматга bosing — tanlov ochiladi (<code>?selected=ID</code>) va chap tomonda formalar paydo bo'ladi.
+          </div>
+
+          <div class="service-list">
+            {% if services_all|length == 0 %}
+              <div class="service-item">
+                <div class="code">Хизматлар ҳали йўқ</div>
+                <div class="meta">Чап томонда биринчи хизмат яратинг.</div>
+              </div>
+            {% endif %}
+
+            {% for s in services_all %}
+              <a href="{{ url_for('services_page', selected=s.id) }}"
+                 style="text-decoration:none; color:inherit;">
+                <div class="service-item {% if selected_service and selected_service.id == s.id %}active{% endif %}">
+                  <div class="top">
+                    <div>
+                      <div class="code">#{{ s.id }} · {{ s.order_code }}</div>
+                      <div class="meta">
+                        <span class="badge {% if s.status in ['transferred','received'] %}ok{% else %}dim{% endif %}">
+                          {{ s.status }}
+                        </span>
+                        <span>Фабрика: {{ s.factory_display }}</span>
+                      </div>
+                    </div>
+                    <div style="text-align:right;">
+                      <div class="chip">{{ s.total_amount_fmt }}</div>
+                      <div class="hint" style="margin-top:6px;">Тўланди: {{ s.paid_total_fmt }}</div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="actions" style="justify-content:space-between;">
+            <a class="btn btn-ghost" href="{{ url_for('menu') }}">← Меню</a>
+            <a class="btn btn-ghost" href="{{ url_for('services_page') }}">Танловни тозалаш</a>
+          </div>
+        </div>
+      </aside>
+
+    </section>
+  </main>
+
+  <script>
+    // ---- Tabs ----
+    const tabs = Array.from(document.querySelectorAll(".tab"));
+    const panels = Array.from(document.querySelectorAll("[data-panel]"));
+
+    function showPanel(key){
+      tabs.forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === key)));
+      panels.forEach(p => p.classList.toggle("show", p.dataset.panel === key));
+    }
+    tabs.forEach(t => t.addEventListener("click", () => showPanel(t.dataset.tab)));
+
+    // ---- Factory mode ----
+    const factoryMode = document.getElementById("factoryMode");
+    const factorySelectWrap = document.getElementById("factorySelectWrap");
+    const factoryManualWrap = document.getElementById("factoryManualWrap");
+
+    function updateFactoryMode(){
+      if (!factoryMode) return;
+      const isManual = factoryMode.value === "manual";
+      factorySelectWrap.style.display = isManual ? "none" : "block";
+      factoryManualWrap.style.display = isManual ? "block" : "none";
+    }
+    if (factoryMode) {
+      factoryMode.addEventListener("change", updateFactoryMode);
+      updateFactoryMode();
+    }
+
+    // ---- Dynamic table rows helpers ----
+    function makeRow(html){
+      const tr = document.createElement("tr");
+      tr.innerHTML = html;
+      const del = tr.querySelector("[data-del]");
+      if (del) del.addEventListener("click", () => tr.remove());
+      return tr;
+    }
+
+    // Transfer rows
+    const transferBody = document.getElementById("transferBody");
+    function addTransferRow(name="", qty="", unit="шт"){
+      if (!transferBody) return;
+      transferBody.appendChild(makeRow(`
+        <td><input class="input" name="transfer_item_name[]" placeholder="Мас: Бейка / Иплар / Мато" value="${name}"></td>
+        <td><input class="input" name="transfer_qty[]" inputmode="numeric" placeholder="0" value="${qty}"></td>
+        <td>
+          <select class="select" name="transfer_unit[]">
+            <option ${unit==="шт"?"selected":""}>шт</option>
+            <option ${unit==="кг"?"selected":""}>кг</option>
+            <option ${unit==="м"?"selected":""}>м</option>
+            <option ${unit==="уп"?"selected":""}>уп</option>
+          </select>
+        </td>
+        <td><button type="button" class="iconbtn" data-del>Ўчириш</button></td>
+      `));
+    }
+    const addTransferBtn = document.getElementById("addTransferRow");
+    const clearTransferBtn = document.getElementById("clearTransferRows");
+    if (addTransferBtn) addTransferBtn.addEventListener("click", () => addTransferRow());
+    if (clearTransferBtn) clearTransferBtn.addEventListener("click", () => transferBody.innerHTML = "");
+    if (transferBody) addTransferRow();
+
+    // Return rows
+    const returnsBody = document.getElementById("returnsBody");
+    function addReturnRow(name="", qty="", unit="шт"){
+      if (!returnsBody) return;
+      returnsBody.appendChild(makeRow(`
+        <td><input class="input" name="return_item_name[]" placeholder="Мас: Материал қолдиғи" value="${name}"></td>
+        <td><input class="input" name="return_qty[]" inputmode="numeric" placeholder="0" value="${qty}"></td>
+        <td>
+          <select class="select" name="return_unit[]">
+            <option ${unit==="шт"?"selected":""}>шт</option>
+            <option ${unit==="кг"?"selected":""}>кг</option>
+            <option ${unit==="м"?"selected":""}>м</option>
+            <option ${unit==="уп"?"selected":""}>уп</option>
+          </select>
+        </td>
+        <td><button type="button" class="iconbtn" data-del>Ўчириш</button></td>
+      `));
+    }
+    const addReturnBtn = document.getElementById("addReturnRow");
+    const clearReturnBtn = document.getElementById("clearReturnRows");
+    if (addReturnBtn) addReturnBtn.addEventListener("click", () => addReturnRow());
+    if (clearReturnBtn) clearReturnBtn.addEventListener("click", () => returnsBody.innerHTML = "");
+    if (returnsBody) addReturnRow();
+
+    // Finished goods rows
+    const fgBody = document.getElementById("fgBody");
+    function addFgRow(color="", size="", qty=""){
+      if (!fgBody) return;
+      fgBody.appendChild(makeRow(`
+        <td><input class="input" name="fg_color[]" placeholder="Мас: ОҚ" value="${color}"></td>
+        <td><input class="input" name="fg_size[]" placeholder="Мас: M" value="${size}"></td>
+        <td><input class="input" name="fg_qty[]" inputmode="numeric" placeholder="0" value="${qty}"></td>
+        <td><button type="button" class="iconbtn" data-del>Ўчириш</button></td>
+      `));
+    }
+    const addFgBtn = document.getElementById("addFgRow");
+    const clearFgBtn = document.getElementById("clearFgRows");
+    if (addFgBtn) addFgBtn.addEventListener("click", () => addFgRow());
+    if (clearFgBtn) clearFgBtn.addEventListener("click", () => fgBody.innerHTML = "");
+    if (fgBody) addFgRow();
+
+    // Defects rows
+    const defectsBody = document.getElementById("defectsBody");
+    function addDefectRow(type="", qty="", note=""){
+      if (!defectsBody) return;
+      defectsBody.appendChild(makeRow(`
+        <td><input class="input" name="defect_type[]" placeholder="Мас: Чок/Доғ/Ўлчам" value="${type}"></td>
+        <td><input class="input" name="defect_qty[]" inputmode="numeric" placeholder="0" value="${qty}"></td>
+        <td><input class="input" name="defect_note[]" placeholder="Изоҳ (ихтиёрий)" value="${note}"></td>
+        <td><button type="button" class="iconbtn" data-del>Ўчириш</button></td>
+      `));
+    }
+    const addDefBtn = document.getElementById("addDefectRow");
+    const clearDefBtn = document.getElementById("clearDefectRows");
+    if (addDefBtn) addDefBtn.addEventListener("click", () => addDefectRow());
+    if (clearDefBtn) clearDefBtn.addEventListener("click", () => defectsBody.innerHTML = "");
+    if (defectsBody) addDefectRow();
+
+    // Optional: remember last opened tab
+    const KEY = "services_ui_tab";
+    const saved = localStorage.getItem(KEY);
+    if (saved) showPanel(saved);
+    tabs.forEach(t => t.addEventListener("click", () => localStorage.setItem(KEY, t.dataset.tab)));
+  </script>
+</body>
+</html>
