@@ -18,7 +18,7 @@ from flask import (
 from database import db, authenticate, get_all_users, update_user, VALID_ROLES
 from export_finance import export_finance_excel
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 app.register_blueprint(export_finance_excel)
 
 # ===================== CONFIG =====================
