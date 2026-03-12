@@ -1,4 +1,5 @@
 from __future__ import annotations
+from flask import send_from_directory
 
 import os
 from datetime import timedelta
@@ -17,6 +18,10 @@ from flask import (
 
 from database import db, authenticate, get_all_users, update_user, VALID_ROLES
 from export_finance import export_finance_excel
+
+@app.route('/logo.png')
+def logo():
+    return send_from_directory('.', 'logo.png')
 
 app = Flask(__name__, template_folder='.')
 app.register_blueprint(export_finance_excel)
